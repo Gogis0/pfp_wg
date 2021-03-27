@@ -100,10 +100,10 @@ def main():
       ctph_time = time.time()-start
       print("Parsing time: {0:.4f}".format(ctph_time))
       # delete temporary parsing files 
-      if not args.k:
-        command = "rm -f {file}.parse_old {file}.last {file}.occ".format(file=args.input)
-        if(execute_command(command,logfile)!=True):
-          return
+#       if not args.k:
+#         command = "rm -f {file}.parse_old {file}.last {file}.occ".format(file=args.input)
+#         if(execute_command(command,logfile)!=True):
+#           return
       
       # ---- preprocess the dictionary 
       start = time.time()
@@ -165,10 +165,10 @@ def main():
         compression_report(args.input,ctph_time,total_time,estimated_compression)
       
       # delete temporary parsing/dictionary files
-      if not args.k:
-        command = "rm -f {file}.parse {file}.parse.C {file}.parse.R {file}.dicz {file}.dicz.len {file}.dicz.int {file}.dicz.int.C {file}.dicz.int.R".format(file=args.input)
-        if(execute_command(command,logfile)!=True):
-          return
+#       if not args.k:
+#         command = "rm -f {file}.parse {file}.parse.C {file}.parse.R {file}.dicz {file}.dicz.len {file}.dicz.int {file}.dicz.int.C {file}.dicz.int.R".format(file=args.input)
+#         if(execute_command(command,logfile)!=True):
+#           return
       # ---- repair done   
 
   print("==== Done")

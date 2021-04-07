@@ -127,7 +127,8 @@ class dbg_algorithms {
 
 			//variables needed for interval_symbols function
 			typename t_csa_wt_type::size_type iv_chars;
-			std::vector<unsigned char> cs ( csa.sigma );
+			// std::vector<unsigned char> cs ( csa.sigma );
+			std::vector<long unsigned int> cs(csa.sigma);
 			std::vector<size_type> rank_c_l( csa.sigma );
 			std::vector<size_type> rank_c_r( csa.sigma );
 
@@ -192,7 +193,8 @@ dbg_algorithms::minimize_dbg_edges( const t_csa_wt_type &csa, size_type kmax, sd
 
 	//variables needed for interval_symbols function
 	size_type iv_chars;
-	std::vector<unsigned char> cs ( csa.sigma );
+	// std::vector<unsigned char> cs ( csa.sigma );
+	std::vector<long unsigned int> cs (csa.sigma);
 	std::vector<size_type> rank_c_i( csa.sigma );
 	std::vector<size_type> rank_c_j( csa.sigma );
 

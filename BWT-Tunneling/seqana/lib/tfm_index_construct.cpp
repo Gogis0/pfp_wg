@@ -135,6 +135,11 @@ int_vector<> load_parse(const string &infile) {
     return v;
 }
 
+void print_vector(const int_vector<>& v) {
+    cout << v << endl;
+    cout << v.size() << endl;
+}
+
 int main(int argc, char **argv) {
     //set default configuration
     construct_config::byte_algo_sa = LIBDIVSUFSORT;
@@ -190,19 +195,11 @@ int main(int argc, char **argv) {
     tfm_index<> tfm;
     memory_monitor::start();
     {
-        cache_config config(true, "./", util::basename(infile));   // WTF?!
-        csa_wt<sdsl::wt_blcd<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;    // WTF?!
-        // wavelet tree, sampling density of SA, sampling density of ISA
-        // csa_wt<sdsl::wt_blcd_int<>> csa;
-        // construct( csa, infile, config, 1 );
+        cache_config config(true, "./", util::basename(infile));
         int_vector<> parse = load_parse(infile);
-        sort(parse.begin(), parse.end());
-        cout << parse << endl;
-        cout << parse.size() << endl;
-        parse = {0, 4, 5, 6, 7, 8, 9};
-        // construct_im(csa, "1 8 15 23 1 8 23 11 8", 'd');
-        construct_im(csa, parse, 4);
-        // csXprintf(cout, "%2I %2S %3s %3P %2p %3B   %:3T", csa);
+        print_vector(parse);
+        csa_wt<wt_blcd_int<>> csa;
+        construct_im(csa, parse);
         fm_size = size_in_bytes(csa);
         auto res = construct_tfm_index(tfm, move(csa), config);
         tfm_size = size_in_bytes(tfm);
@@ -211,22 +208,16 @@ int main(int argc, char **argv) {
     }
     memory_monitor::stop();
 
-    //print infos if wanted
     if (informative) {
-        //print additional information
         cout << "input_length\t" << tfm.size() << endl;
         cout << "tfm_length\t" << tfm.L.size() << endl;
-
         cout << "fm_index_size\t" << fm_size << endl;
         cout << "tfm_index_size\t" << tfm_size << endl;
-
         cout << "min_dbg_k\t" << min_k << endl;
         cout << "min_dbg_edges\t" << min_edges << endl;
-
         memory_monitor::write_memory_log<leet_format>(cout);
     }
 
-    //serialize result
     store_to_file(tfm, outfile);
     return 0;
 }

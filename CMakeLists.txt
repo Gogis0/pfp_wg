@@ -1,11 +1,11 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.10)
 project(tunneling)
 
 set(CMAKE_CXX_STANDARD 11)
 
-include_directories(~/projects/cds2/include)
-link_directories(~/projects/cds2/lib)
-include_directories(~/projects/cds_project/BWT-Tunneling/seqana/include)
+include_directories(include)
+link_directories(lib)
+include_directories(BWT-Tunneling/seqana/include)
 
 add_executable(tfm_index_construct BWT-Tunneling/seqana/lib/tfm_index_construct.cpp)
 

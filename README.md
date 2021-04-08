@@ -6,11 +6,27 @@ https://github.com/waYne1337/BWT-Tunneling  \
 This repository is not used \
 https://gitlab.com/manzai/Big-BWT
 
-sudo apt-get install doxygen
+# How to install and run test
+```
+git clone https://github.com/simongog/sdsl-lite.git 
+cd sdsl-lite/
+./install.sh ../
+cd ../
 
-commented out lines 
-103-106
-168-172
+cd bigrepair/
+make
+cd ../
 
-./bigrepair ../data/yeast.fasta
+cmake .
+make
 
+conda create -n bigrepair psutil
+conda activate bigrepair
+
+./bigrepair/bigrepair -w 4 -p 11 ./data/yeast.fasta
+./tfm_index_construct           \\
+    -i                          \\
+    -sa DIVSUFSORT              \\
+    ./data/yeast.fasta.parse    \\
+    ./data/yeast.fasta.tunnel
+```

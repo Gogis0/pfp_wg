@@ -1,8 +1,9 @@
-/data/yeast.fasta.*
 /.idea
-*.x
-*.o
 /cmake-build-debug/
+/include/
+/lib/
+/sdsl-lite/
+/data/yeast.fasta.*
 /bigrepair/ctph/unparsz
 /bigrepair/large_repair/irepair
 /bigrepair/largeb_repair/despair
@@ -16,3 +17,9 @@
 /bigrepair/iprocdic
 /bigrepair/postproc
 /bigrepair/procdic
+/Makefile
+/tfm_index_construct
+/CMakeCache.txt
+/cmake_install.cmake
+*.x
+*.o

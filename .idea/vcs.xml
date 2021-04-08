@@ -3,5 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/sdsl-lite" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/sdsl-lite/external/googletest" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/sdsl-lite/external/libdivsufsort" vcs="Git" />
   </component>
 </project>

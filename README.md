@@ -8,6 +8,9 @@ https://gitlab.com/manzai/Big-BWT
 
 # How to install and run test
 ```
+git clone https://github.com/andynet/cds_project.git
+cd cds_project
+
 git clone https://github.com/simongog/sdsl-lite.git 
 cd sdsl-lite
 ./install.sh ..

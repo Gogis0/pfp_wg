@@ -14,6 +14,10 @@ tfm_index_invert.x: include/tfm_index.hpp include/dbg_algorithms.hpp lib/tfm_ind
 	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
 	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/tfm_index_invert.cpp -o tfm_index_invert.x $(LIBS)
 
+tfm_index_invert_to_binary.x: include/tfm_index.hpp include/dbg_algorithms.hpp lib/tfm_index_invert_to_binary.cpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/tfm_index_invert_to_binary.cpp -o tfm_index_invert_to_binary.x $(LIBS)
+
 dbg_edgespectrum.x: include/dbg_algorithms.hpp lib/dbg_edgespectrum.cpp
 	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
 	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/dbg_edgespectrum.cpp -o dbg_edgespectrum.x $(LIBS)

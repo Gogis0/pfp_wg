@@ -32,4 +32,7 @@ conda activate bigrepair
     -sa DIVSUFSORT              \
     data/yeast.fasta.parse      \
     data/yeast.fasta.tunnel
+
+./tfm_index_invert_to_binary data/yeast.fasta.tunnel data/yeast.fasta.untunneled
+./bigrepair/bigrepair -d data/yeast.fasta
 ```

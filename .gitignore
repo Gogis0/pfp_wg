@@ -23,3 +23,5 @@
 /cmake_install.cmake
 *.x
 *.o
+/CMakeFiles/
+tfm_index_invert_to_binary

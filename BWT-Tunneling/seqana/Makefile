@@ -1,6 +1,6 @@
 include ../Make.helper
 
-DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x dbg_edgespectrum.x
+DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
 TRIEEXECUTABLES = create_trie_input.x trie_construct.x mp_search.x
 
 all: $(DBGEXECUTABLES) $(TRIEEXECUTABLES)

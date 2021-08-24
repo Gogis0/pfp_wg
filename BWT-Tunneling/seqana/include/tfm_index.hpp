@@ -49,8 +49,7 @@
 
 #include "dbg_algorithms.hpp"
 
-struct tfm_index_tag {
-};
+struct tfm_index_tag {};
 
 //! a class representing a tunneled fm-index
 template<class t_wt_type =       sdsl::wt_blcd<>,
@@ -76,9 +75,10 @@ public:
 
 private:
     template<typename t_tfm_index_type>
-    friend void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len,
-                                    sdsl::int_vector_buffer<8> &&L_buf, sdsl::bit_vector &&dout,
-                                    sdsl::bit_vector &&din);
+    friend void construct_tfm_index(
+            t_tfm_index_type &tfm_index, uint64_t text_len,
+            sdsl::int_vector_buffer<8> &&L_buf, sdsl::bit_vector &&dout,
+            sdsl::bit_vector &&din);
 
     size_type text_len; //original textlen
     wt_type m_L;
@@ -212,8 +212,7 @@ void construct(t_index &idx, const std::string &file, sdsl::cache_config &config
 template<class t_tfm_index_type,
         class t_csa_wt_type>
 std::pair<typename t_tfm_index_type::size_type, typename t_tfm_index_type::size_type>
-construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cache_config &config)
-{
+construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cache_config &config) {
     typedef typename t_tfm_index_type::size_type size_type;
     std::pair<size_type, size_type> dbg_res;
 

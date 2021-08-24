@@ -1,6 +1,6 @@
 #include <iostream>
 #include <deque>
-#include "tfm_index.hpp"
+#include "../include/tfm_index.hpp"
 
 using namespace std;
 using namespace sdsl;
@@ -15,7 +15,7 @@ void printUsage(char **argv) {
 };
 
 int main(int argc, char **argv) {
-    if (argc != 2) printUsage(argv);
+    if (argc != 3) printUsage(argv);
     //load tunneled fm index
     tfm_index<> tfm;
     load_from_file(tfm, argv[1]);

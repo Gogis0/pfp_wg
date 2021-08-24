@@ -8,7 +8,7 @@ https://gitlab.com/manzai/Big-BWT
 
 # How to install and run test
 ```
-.git clone --recurse-submodules https://github.com/andynet/cds_project.git
+git clone --recurse-submodules https://github.com/andynet/cds_project.git
 cd cds_project/sdsl-lite/
 ./install.sh ..
 cd ../

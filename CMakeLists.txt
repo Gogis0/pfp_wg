@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 
 include_directories(include)
 link_directories(lib)
-include_directories(BWT-Tunneling/seqana/include)
+# include_directories(BWT-Tunneling/seqana/include)
 
 # libraries
 add_library(malloc_count bigrepair/ctph/malloc_count.h bigrepair/ctph/malloc_count.c)
@@ -47,3 +47,6 @@ add_executable(irepair bigrepair/largeb_repair/irepair.c)
 target_link_libraries(irepair array hash heap records basics)
 
 add_executable(despair bigrepair/repair/despair.c)
+
+add_executable(tfm_explore src/tfm_explore.cpp)
+target_link_libraries(tfm_explore sdsl divsufsort divsufsort64)

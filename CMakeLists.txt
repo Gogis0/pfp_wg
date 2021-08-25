@@ -50,3 +50,6 @@ add_executable(despair bigrepair/repair/despair.c)
 
 add_executable(tfm_explore src/tfm_explore.cpp)
 target_link_libraries(tfm_explore sdsl divsufsort divsufsort64)
+
+add_executable(tfm_index_construct_simplified src/tfm_index_construct_simplified.cpp)
+target_link_libraries(tfm_index_construct_simplified sdsl divsufsort divsufsort64)

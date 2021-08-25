@@ -6,12 +6,12 @@ int main() {
     tfm_index<> tfm;
     load_from_file(tfm, "../data/yeast.fasta.tunnel");
 
-    const tfm_index<>::wt_type &L = tfm.L;
-    const std::vector<sdsl::int_vector<>::size_type> &C = tfm.C;
-    const tfm_index<>::bit_vector_type &dout = tfm.dout;
+    const tfm_index<>::wt_type &L = tfm.L;                          // L[1..|e|] - labels
+    const std::vector<sdsl::int_vector<>::size_type> &C = tfm.C;    // C[1..|A|]
+    const tfm_index<>::bit_vector_type &dout = tfm.dout;            // O[1..|v|]
 //    const rank_type &dout_rank = m_dout_rank;
 //    const select_type &dout_select = m_dout_select;
-    const tfm_index<>::bit_vector_type &din = tfm.din;
+    const tfm_index<>::bit_vector_type &din = tfm.din;              // I[1..|v|]
 //    const rank_type &din_rank = m_din_rank;
 //    const select_type &din_select = m_din_select;
 

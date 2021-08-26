@@ -21,15 +21,15 @@ int main() {
     cache_config config = cache_config(false, "../data/", "tmp");
 
     tfm_index<> tfm;
-    // auto parse = init_vector({1, 2, 3, 1, 2, 3, 4});
-    auto parse = init_vector({1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 4});
-    cout << util::to_string(parse) << endl;
-    cout << to_string(parse.width()) << endl;
+    auto parse = init_vector({1, 2, 3, 1, 2, 3, 4});
+    // auto parse = init_vector({1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 4});
+    // cout << util::to_string(parse) << endl;
+    // cout << to_string(parse.width()) << endl;
     csa_wt<wt_blcd_int<>> csa;
     construct_im(csa, parse);
     construct_tfm_index(tfm, move(csa), config);
-    // construct_tfm_index(tfm, , L_buf, dout din);
 
+    // print wheeler graph
     for (unsigned char i : tfm.L) {
         cout << to_string(i) << " ";    // L[1..|e|]
     }
@@ -38,6 +38,16 @@ int main() {
     cout << tfm.din << endl;            // I[1..|v|]
     cout << tfm.C << endl;              // C[1..|A|]
 
+
+    tfm_index<> tfm2;
+    wt_blcd<> wt = tfm.L;
+    bit_vector dout = tfm.dout;
+    bit_vector din = tfm.din;
+    uint64_t text_len = tfm.size();
+
+    construct_tfm_index_tmp(tfm2, text_len, move(wt), move(dout), move(din));
+
     store_to_file(tfm, "../data/yeast.tunnel");
+    store_to_file(tfm2, "../data/yeast.tunnel2");
     return 0;
 }

@@ -49,7 +49,8 @@
 
 #include "dbg_algorithms.hpp"
 
-struct tfm_index_tag {};
+struct tfm_index_tag {
+};
 
 //! a class representing a tunneled fm-index
 template<class t_wt_type =       sdsl::wt_blcd<>,
@@ -76,9 +77,20 @@ public:
 private:
     template<typename t_tfm_index_type>
     friend void construct_tfm_index(
-            t_tfm_index_type &tfm_index, uint64_t text_len,
-            sdsl::int_vector_buffer<8> &&L_buf, sdsl::bit_vector &&dout,
-            sdsl::bit_vector &&din);
+            t_tfm_index_type &tfm_index,
+            uint64_t text_len,
+            sdsl::int_vector_buffer<8> &&L_buf,
+            sdsl::bit_vector &&dout,
+            sdsl::bit_vector &&din
+    );
+
+    friend void construct_tfm_index_tmp(
+            tfm_index<> &tfm_index,
+            uint64_t text_len,
+            sdsl::wt_blcd<> &&L,
+            sdsl::bit_vector &&dout,
+            sdsl::bit_vector &&din
+    );
 
     size_type text_len; //original textlen
     wt_type m_L;
@@ -209,8 +221,7 @@ void construct(t_index &idx, const std::string &file, sdsl::cache_config &config
 //! function constructs a tfm index using a compressed suffix array in form of a BWT in a wavelet tree.
 //! note that the csa is erased during construction
 //! function returns the result of the dbg_algorithms::find_min_dbg - function
-template<class t_tfm_index_type,
-        class t_csa_wt_type>
+template<class t_tfm_index_type, class t_csa_wt_type>
 std::pair<typename t_tfm_index_type::size_type, typename t_tfm_index_type::size_type>
 construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cache_config &config) {
     typedef typename t_tfm_index_type::size_type size_type;
@@ -283,6 +294,29 @@ void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::i
     sdsl::util::init_support(tfm_index.m_dout_select, &tfm_index.m_dout);
 
     //din
+    tfm_index.m_din = bv_type(std::move(din));
+    sdsl::util::init_support(tfm_index.m_din_rank, &tfm_index.m_din);
+    sdsl::util::init_support(tfm_index.m_din_select, &tfm_index.m_din);
+}
+
+void construct_tfm_index_tmp(
+        tfm_index<> &tfm_index,
+        uint64_t text_len,
+        sdsl::wt_blcd<> &&L,
+        sdsl::bit_vector &&dout,
+        sdsl::bit_vector &&din
+) {
+    typedef ::tfm_index<>::wt_type wt_type;
+    typedef ::tfm_index<>::bit_vector_type bv_type;
+
+    tfm_index.text_len = text_len;
+    tfm_index.m_L = L;
+    sdsl::create_C_array(tfm_index.m_C, tfm_index.m_L);
+
+    tfm_index.m_dout = bv_type(std::move(dout));
+    sdsl::util::init_support(tfm_index.m_dout_rank, &tfm_index.m_dout);
+    sdsl::util::init_support(tfm_index.m_dout_select, &tfm_index.m_dout);
+
     tfm_index.m_din = bv_type(std::move(din));
     sdsl::util::init_support(tfm_index.m_din_rank, &tfm_index.m_din);
     sdsl::util::init_support(tfm_index.m_din_select, &tfm_index.m_din);

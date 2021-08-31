@@ -31,21 +31,6 @@ void print_tfm(const tfm_index<> &tfm) {
     cout << endl << endl;
 }
 
-ulong get_value(const tfm_index<> &tfm, ulong u) {
-    return tfm.L.inverse_select(u).second;
-}
-
-void my_backwardstep(const tfm_index<> &tfm, pair<ulong, ulong> &pos, ulong &value) {
-    ulong &in_node = pos.first;
-    ulong &tunnel_num = pos.second;
-    value = get_value(tfm, in_node);
-    in_node = tfm.L.inverse_select(in_node).first + tfm.C[value];
-    ulong rank = tfm.din_rank(in_node + 1);
-    if (tfm.din[in_node] == 0) { tunnel_num = in_node - tfm.din_select(rank); }
-    in_node = tfm.dout_select(rank);
-    if (tfm.dout[in_node + 1] == 0) { in_node += tunnel_num; tunnel_num = 0; }
-}
-
 // next step: read BWT-Tunneling/seqana/include/dbg_algorithms.hpp
 
 class edge{
@@ -86,7 +71,7 @@ public:
         return next;
     }
     void print() const {
-        cout << "Tunnel " << t << " from " << u << " to " << v << " with label " << l << "." << endl;
+        cout << "Tunnel " << t << " from " << u << " to " << v << " with label " << l << ".\n";
     }
 };
 
@@ -97,6 +82,7 @@ void print_original(const tfm_index<> &tfm) {
         e = e.get_next(tfm);
         e.print();
     }
+    cout << endl;
 }
 
 wt_blcd<> construct_from_vector(initializer_list<uint32_t> il);
@@ -106,10 +92,7 @@ int main() {
     cache_config config = cache_config(false, "../data/", "tmp");
 
     tfm_index<> tfm;
-    // auto parse = init_parse({1, 2, 3, 1, 2, 3, 4});
-    // auto parse = init_parse({1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 1, 2, 3, 4});
     auto parse = init_parse({1, 2, 1, 2});
-    // auto parse = init_parse({1, 2, 3, 1, 2, 3});
     csa_wt<wt_blcd_int<>> csa;
     construct_im(csa, parse);
     construct_tfm_index(tfm, move(csa), config);
@@ -119,16 +102,13 @@ int main() {
 
 
     tfm_index<> tfm2;
-    wt_blcd<> wt = construct_from_vector({4, 0, 3, 3, 3, 1, 2, 3});
-    bit_vector dout = int_vector<1>({1, 1, 0, 0, 0, 1, 1, 1, 1});
-    bit_vector din  = int_vector<1>({1, 1, 1, 1, 0, 0, 0, 1, 1});
+    wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
+    bit_vector dout = int_vector<1>({1, 1, 0, 1, 1});
+    bit_vector din  = int_vector<1>({1, 1, 1, 0, 1});
     uint64_t text_len = tfm.size();
 
     construct_tfm_index_tmp(tfm2, text_len, move(wt), move(dout), move(din));
-    // print_tfm(tfm2);
-
-    store_to_file(tfm, "../data/yeast.tunnel");
-    store_to_file(tfm2, "../data/yeast.tunnel2");
+    print_tfm(tfm2);
     return 0;
 }
 

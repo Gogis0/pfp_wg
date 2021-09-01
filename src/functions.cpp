@@ -22,8 +22,8 @@ void print_tfm(const tfm_index<> &tfm) {
         cout << to_string(i) << " ";                // L[1..|e|]
     }
     cout << endl;
-    cout << "O:\t" << tfm.dout << endl;             // O[1..|v|]
     cout << "I:\t" << tfm.din << endl;              // I[1..|v|]
+    cout << "O:\t" << tfm.dout << endl;             // O[1..|v|]
     cout << "C:\t";
     for (uint i = 0; i <= tfm.L.sigma; i++) {
         cout << tfm.C[i] <<  " " ;                  // C[1..|A|]
@@ -93,17 +93,21 @@ void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
     //find minimal edge-reduced DBG and store kmer bounds in a bitvector B
     bit_vector B;
     dbg_algorithms::find_min_dbg(csa, B, config);
-    // cout << "B: " << B << endl;
+    cout << "B: " << B << endl;
 
     //use bitvector to determine prefix intervals to be tunneled
     bit_vector dout = B;
     bit_vector din = B;
     dbg_algorithms::mark_prefix_intervals(csa, dout, din);
-    // cout << "din:\t" << din << "\ndout:\t" << dout << "\n\n";
+    cout << "din:\t" << din << "\ndout:\t" << dout << "\n\n";
 
     //create a buffer for newly constructed L
     string tmp_file_name = "tmp_123";
     int_vector_buffer<8> L_buf(tmp_file_name, std::ios::out);
+
+    for (ulong i = 0; i < csa.size(); i++) {
+        if (din[i] == 1) L_buf.push_back(csa.wavelet_tree[i]);
+    }
 
     //remove redundant entries from L, dout and din
     ulong p = 0;
@@ -111,7 +115,6 @@ void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
     for (ulong i = 0; i < csa.size(); i++) {
         // cout << "din:\t" << din << "\ndout:\t" << dout << "\n";
         if (din[i] == 1) {
-            L_buf.push_back(csa.wavelet_tree[i]);
             dout[p] = dout[i];
             // cout << "dout " << p << "<-" << i << endl;
             p++;

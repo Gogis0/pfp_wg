@@ -6,31 +6,6 @@
 using namespace std;
 using namespace sdsl;
 
-int_vector<> init_parse(initializer_list<uint32_t> il) {
-    auto res = int_vector<>(il.size(), 1, 32);
-    uint i = 0;
-    for (auto value : il) {
-        res[i] = value;
-        i++;
-    }
-    return res;
-}
-
-void print_tfm(const tfm_index<> &tfm) {
-    cout << "L:\t";
-    for (unsigned char i : tfm.L) {
-        cout << to_string(i) << " ";                // L[1..|e|]
-    }
-    cout << endl;
-    cout << "I:\t" << tfm.din << endl;              // I[1..|v|]
-    cout << "O:\t" << tfm.dout << endl;             // O[1..|v|]
-    cout << "C:\t";
-    for (uint i = 0; i <= tfm.L.sigma; i++) {
-        cout << tfm.C[i] <<  " " ;                  // C[1..|A|]
-    }
-    cout << endl << endl;
-}
-
 class edge{
 public:
     ulong u;    // in node
@@ -68,19 +43,108 @@ public:
         }
         return next;
     }
-    void print() const {
-        cout << "Tunnel " << t << " from " << u << " to " << v << " with label " << l << ".\n";
+
+    string dot_repr() const {
+        stringstream ss;
+        ss  << "\t" << u
+            << " -> " << v
+            << " [label = \"t=" << t
+            << "\\nl=" << l
+            << "\"]\n";
+        return ss.str();
     }
 };
 
+class wheeler_graph{
+public:
+    uint n_vertices;
+    uint n_edges;
+    vector<uint> ordering;
+    vector<uint> source_nodes;
+    vector<uint> destination_nodes;
+    vector<uint> labels;
+    vector<uint> tunnel_num;
 
-void print_original(const tfm_index<> &tfm) {
-    edge e = edge(0, 0, 0, 0);
-    for (auto i = tfm.size(); i > 0; i--) {
-        e = e.get_next(tfm);
-        e.print();
+    explicit wheeler_graph(const tfm_index<> &tfm) {
+        n_vertices = tfm.L.size();
+        n_edges = tfm.din.size();
+
+        edge e = edge(0, 0, 0, 0);
+        for (auto i = tfm.size(); i > 0; i--) {
+            e = e.get_next(tfm);
+            source_nodes.push_back(e.u);
+            destination_nodes.push_back(e.v);
+            labels.push_back(e.l);
+            tunnel_num.push_back(e.t);
+        }
+
+    }
+
+    string dot_repr() {
+        stringstream ss;
+        ss << "digraph G {\n";
+        for (uint i = 0; i < n_edges; i++) {
+            ss  << "\t" << source_nodes[i]
+                << " -> " << destination_nodes[i]
+                << " [label = \"t=" << tunnel_num[i]
+                << "\\nl=" << labels[i]
+                << "\"]\n";
+        }
+        ss << "}";
+        return ss.str();
+    }
+};
+
+int_vector<> init_parse(initializer_list<uint32_t> il) {
+    auto res = int_vector<>(il.size(), 1, 32);
+    uint i = 0;
+    for (auto value : il) {
+        res[i] = value;
+        i++;
+    }
+    return res;
+}
+
+wt_blcd<> construct_from_vector(initializer_list<uint32_t> il) {
+    wt_blcd<> wt;
+    const uint8_t size = wt_blcd<>::alphabet_category::WIDTH;
+    int_vector<size> text = int_vector<size>(il);
+
+    string tmp_file_name = "tmp";
+    store_to_file(text, tmp_file_name);
+
+    int_vector_buffer<size> text_buf(tmp_file_name);
+    wt_blcd<> tmp(text_buf, text_buf.size());
+    wt.swap(tmp);
+    remove(tmp_file_name);
+    return wt;
+}
+
+void print_tfm(const tfm_index<> &tfm) {
+    cout << "L:\t";
+    for (unsigned char i : tfm.L) {
+        cout << to_string(i) << " ";                // L[1..|e|]
     }
     cout << endl;
+    cout << "I:\t" << tfm.din << endl;              // I[1..|v|]
+    cout << "O:\t" << tfm.dout << endl;             // O[1..|v|]
+    cout << "C:\t";
+    for (uint i = 0; i <= tfm.L.sigma; i++) {
+        cout << tfm.C[i] <<  " " ;                  // C[1..|A|]
+    }
+    cout << endl << endl;
+}
+
+string dot_repr_tfm(const tfm_index<> &tfm) {
+    edge e = edge(0, 0, 0, 0);
+    stringstream ss;
+    ss << "digraph G {\n";
+    for (auto i = tfm.size(); i > 0; i--) {
+        e = e.get_next(tfm);
+        ss << e.dot_repr();
+    }
+    ss << "}";
+    return ss.str();
 }
 
 void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
@@ -93,13 +157,13 @@ void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
     //find minimal edge-reduced DBG and store kmer bounds in a bitvector B
     bit_vector B;
     dbg_algorithms::find_min_dbg(csa, B, config);
-    cout << "B: " << B << endl;
+    // cout << "B: " << B << endl;
 
     //use bitvector to determine prefix intervals to be tunneled
     bit_vector dout = B;
     bit_vector din = B;
     dbg_algorithms::mark_prefix_intervals(csa, dout, din);
-    cout << "din:\t" << din << "\ndout:\t" << dout << "\n\n";
+    // cout << "din:\t" << din << "\ndout:\t" << dout << "\n\n";
 
     //create a buffer for newly constructed L
     string tmp_file_name = "tmp_123";
@@ -141,19 +205,3 @@ void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
     sdsl::remove(tmp_file_name);
     // cout << "\n" << endl;
 }
-
-wt_blcd<> construct_from_vector(initializer_list<uint32_t> il) {
-    wt_blcd<> wt;
-    const uint8_t size = wt_blcd<>::alphabet_category::WIDTH;
-    int_vector<size> text = int_vector<size>(il);
-
-    string tmp_file_name = "tmp";
-    store_to_file(text, tmp_file_name);
-
-    int_vector_buffer<size> text_buf(tmp_file_name);
-    wt_blcd<> tmp(text_buf, text_buf.size());
-    wt.swap(tmp);
-    remove(tmp_file_name);
-    return wt;
-}
-

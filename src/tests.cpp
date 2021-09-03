@@ -49,3 +49,13 @@ Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
     cr_expect(tfm2.dout == tfm.dout);
     cr_expect(tfm2.din == tfm.din);
 }
+
+Test(core, naive_representation_is_the_same_as_tfm_representation) {
+    auto parse = init_parse({1, 2, 1, 2});
+
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+
+    cr_assert(wg.dot_repr() == dot_repr_tfm(tfm));
+}

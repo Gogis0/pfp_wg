@@ -95,7 +95,24 @@ public:
     }
 };
 
-int_vector<> init_parse(initializer_list<uint32_t> il) {
+vector<uint> read_parse(const string &infile) {
+    vector<uint> v;
+    FILE *parse = fopen(infile.c_str(), "r");
+
+    fseek(parse, 0, SEEK_END);
+    size_t n;
+    n = ftell(parse) / sizeof(int);
+    fseek(parse, 0, SEEK_SET);
+
+    int tmp;
+    for (int i = 0; i < n; i++) {
+        fread(&tmp, sizeof(int), 1, parse);
+        v.push_back(tmp);
+    }
+    return v;
+}
+
+int_vector<> init_parse(const vector<uint> &il) {
     auto res = int_vector<>(il.size(), 1, 32);
     uint i = 0;
     for (auto value : il) {
@@ -147,10 +164,11 @@ string dot_repr_tfm(const tfm_index<> &tfm) {
     return ss.str();
 }
 
-void my_construct(tfm_index<> &tfm, int_vector<> &parse) {
+void my_construct(tfm_index<> &tfm,  vector<uint> &parse_vec) {
     construct_config::byte_algo_sa = LIBDIVSUFSORT;
     cache_config config = cache_config(false, "../data/", "tmp");
 
+    int_vector<> parse = init_parse(parse_vec);
     csa_wt<wt_blcd_int<>> csa;
     construct_im(csa, parse);
 

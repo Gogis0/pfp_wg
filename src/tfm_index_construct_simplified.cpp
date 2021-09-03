@@ -1,12 +1,15 @@
 #include "functions.cpp"
 
 int main() {
+    string dict_file = "../data/yeast.fasta.dict";
+    // vector<string> dict = read_dict(dict_file);
+
+    vector<uint> parse = read_parse("../data/yeast.fasta.parse");
+    // vector<uint> parse = {1, 2, 1, 3, 1, 2, 1, 3, 1};
+
     tfm_index<> tfm;
-    auto parse = init_parse({1, 2, 1, 2});
-    // auto parse = init_parse({1, 2, 1, 3, 1, 2, 1, 3, 1});
     my_construct(tfm, parse);
-    // print_tfm(tfm);
-    // cout << dot_repr_tfm(tfm) << endl;
+
     wheeler_graph wg = wheeler_graph(tfm);
     cout << wg.dot_repr() << endl;
 

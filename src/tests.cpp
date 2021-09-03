@@ -4,8 +4,9 @@
 Test(external, empty_test) {}
 
 Test(core, tfm_construction_small_example) {
+    vector<uint> parse = {1, 2, 1, 2};
+
     tfm_index<> tfm;
-    auto parse = init_parse({1, 2, 1, 2});
     my_construct(tfm, parse);
 
     wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
@@ -20,8 +21,9 @@ Test(core, tfm_construction_small_example) {
 }
 
 Test(core, tfm_construction_easypeasy) {
+    // this is            e  a  s  y  p  e  a  s  y
+    vector<uint> parse = {2, 1, 4, 5, 3, 2, 1, 4, 5};
     tfm_index<> tfm;
-    auto parse = init_parse({2, 1, 4, 5, 3, 2, 1, 4, 5});   // this is easypeasy => a -> 1, e -> 2, ...
     my_construct(tfm, parse);
 
     wt_blcd<> wt = construct_from_vector({5, 2, 3, 0, 5, 1, 4});
@@ -33,8 +35,9 @@ Test(core, tfm_construction_easypeasy) {
 }
 
 Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
+    vector<uint> parse = {1, 2, 1, 2};
+
     tfm_index<> tfm;
-    auto parse = init_parse({1, 2, 1, 2});
     my_construct(tfm, parse);
 
     tfm_index<> tfm2;
@@ -51,7 +54,7 @@ Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
 }
 
 Test(core, naive_representation_is_the_same_as_tfm_representation) {
-    auto parse = init_parse({1, 2, 1, 2});
+    vector<uint> parse = {1, 2, 1, 2};
 
     tfm_index<> tfm;
     my_construct(tfm, parse);

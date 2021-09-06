@@ -65,9 +65,52 @@ Test(core, naive_representation_is_the_same_as_tfm_representation) {
 
 Test(core, we_can_read_dictionary) {
     vector<string> dict = read_dict("../data/yeast.fasta.dict");
-    for (const string &s: dict) {cout << s << endl;}
+    // for (const string &s: dict) {cout << s << endl;}
+    cr_assert(dict[0] == "\u0002CCACACC");
     cr_assert(dict[1] == "CACCACACACC");
     cr_assert(dict[2] == "CACCACACC");
+    cr_assert(dict[3] == "CACCCACACACACA\u0002\u0002\u0002\u0002");
     cr_assert(dict[4] == "CACCCACACACACACC");
     cr_assert(dict[5] == "CACCCACACACC");
+}
+
+Test(core, relabel_works) {
+    wheeler_graph wg = wheeler_graph(2);
+    wg.add_edge(0, 1, 0, 0);
+    vector<string> dict = {"ABAABAB"};
+    expand_edge(wg, 0, dict[0]);
+    cr_assert(
+        "digraph G {\n"
+        "\t0 -> 2 [label = \"t=0\\nl=65\"]\n"
+        "\t2 -> 3 [label = \"t=0\\nl=66\"]\n"
+        "\t3 -> 4 [label = \"t=0\\nl=65\"]\n"
+        "\t4 -> 5 [label = \"t=0\\nl=65\"]\n"
+        "\t5 -> 6 [label = \"t=0\\nl=66\"]\n"
+        "\t6 -> 7 [label = \"t=0\\nl=65\"]\n"
+        "\t7 -> 1 [label = \"t=0\\nl=66\"]\n"
+        "}" == wg.dot_repr()
+    );
+}
+
+Test(core, expand_graph_returns_sensible_answer) {
+    vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
+    vector<string> dict = {"a", "ab", "ac"};
+
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    cr_assert(
+        "digraph G {\n"
+        "\t0 -> 4 [label = \"t=0\\nl=97\"]\n"
+        "\t4 -> 3 [label = \"t=0\\nl=99\"]\n"
+        "\t3 -> 5 [label = \"t=0\\nl=97\"]\n"
+        "\t5 -> 1 [label = \"t=1\\nl=98\"]\n"
+        "\t1 -> 6 [label = \"t=1\\nl=97\"]\n"
+        "\t6 -> 3 [label = \"t=0\\nl=99\"]\n"
+        "\t3 -> 7 [label = \"t=0\\nl=97\"]\n"
+        "\t7 -> 2 [label = \"t=0\\nl=98\"]\n"
+        "\t2 -> 0 [label = \"t=0\\nl=97\"]\n"
+        "}" == wg.dot_repr()
+    );
 }

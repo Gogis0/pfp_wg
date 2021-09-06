@@ -65,6 +65,11 @@ public:
     vector<uint> labels;
     vector<uint> tunnel_num;
 
+    explicit wheeler_graph(uint V) {
+        n_vertices = V;
+        n_edges = 0;
+    }
+
     explicit wheeler_graph(const tfm_index<> &tfm) {
         n_vertices = tfm.L.size();
         n_edges = tfm.din.size();
@@ -78,6 +83,22 @@ public:
             tunnel_num.push_back(e.t);
         }
 
+    }
+
+    void add_edge(uint source, uint destination, uint label, uint tunnel) {
+        source_nodes.push_back(source);
+        destination_nodes.push_back(destination);
+        labels.push_back(label);
+        tunnel_num.push_back(tunnel);
+        n_edges++;
+    }
+
+    void remove_edge(uint edge) {
+        source_nodes.erase(source_nodes.begin() + edge);
+        destination_nodes.erase(destination_nodes.begin() + edge);
+        labels.erase(labels.begin() + edge);
+        tunnel_num.erase(tunnel_num.begin() + edge);
+        n_edges--;
     }
 
     string dot_repr() {
@@ -94,6 +115,27 @@ public:
         return ss.str();
     }
 };
+
+void expand_edge(wheeler_graph &wg, uint edge, const string &label) {
+    uint end = wg.destination_nodes[edge];
+    uint current = wg.source_nodes[edge];
+    uint i;
+    for (i = 0; i < label.length()-1; i++) {
+        uint new_vertex = wg.n_vertices;
+        wg.n_vertices++;
+        wg.add_edge(current, new_vertex, label[i], wg.tunnel_num[i]);
+        current = new_vertex;
+    }
+    wg.add_edge(current, end, label[i], wg.tunnel_num[i]);
+    wg.remove_edge(edge);
+}
+
+void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
+    uint n_edges = wg.n_edges;
+    for (uint i = 0; i < n_edges; i++) {
+        expand_edge(wg, 0, dict[wg.labels[0]]);
+    }
+}
 
 vector<uint> read_parse(const string &infile) {
     vector<uint> v;

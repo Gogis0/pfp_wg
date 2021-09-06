@@ -85,6 +85,25 @@ public:
 
     }
 
+    bool is_valid() {
+        for (uint i = 0; i < n_edges; i++) {
+            for (uint j = 0; j < n_edges; j++) {
+                if (labels[i] < labels[j]
+                    && ordering[destination_nodes[i]] >= ordering[destination_nodes[j]]
+                ) {
+                    return false;
+                }
+                if (labels[i] == labels[j]
+                    && ordering[source_nodes[i]] < ordering[source_nodes[j]]
+                    && ordering[destination_nodes[i]] > ordering[destination_nodes[j]]
+                ) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     void add_edge(uint source, uint destination, uint label, uint tunnel) {
         source_nodes.push_back(source);
         destination_nodes.push_back(destination);
@@ -107,6 +126,20 @@ public:
         for (uint i = 0; i < n_edges; i++) {
             ss  << "\t" << source_nodes[i]
                 << " -> " << destination_nodes[i]
+                << " [label = \"t=" << tunnel_num[i]
+                << "\\nl=" << labels[i]
+                << "\"]\n";
+        }
+        ss << "}";
+        return ss.str();
+    }
+
+    string dot_repr_ordered() {
+        stringstream ss;
+        ss << "digraph G {\n";
+        for (uint i = 0; i < n_edges; i++) {
+            ss  << "\t" << ordering[source_nodes[i]]
+                << " -> " << ordering[destination_nodes[i]]
                 << " [label = \"t=" << tunnel_num[i]
                 << "\\nl=" << labels[i]
                 << "\"]\n";

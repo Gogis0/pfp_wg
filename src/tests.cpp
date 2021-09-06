@@ -62,3 +62,12 @@ Test(core, naive_representation_is_the_same_as_tfm_representation) {
 
     cr_assert(wg.dot_repr() == dot_repr_tfm(tfm));
 }
+
+Test(core, we_can_read_dictionary) {
+    vector<string> dict = read_dict("../data/yeast.fasta.dict");
+    for (const string &s: dict) {cout << s << endl;}
+    cr_assert(dict[1] == "CACCACACACC");
+    cr_assert(dict[2] == "CACCACACC");
+    cr_assert(dict[4] == "CACCCACACACACACC");
+    cr_assert(dict[5] == "CACCCACACACC");
+}

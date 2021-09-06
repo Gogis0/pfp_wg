@@ -112,6 +112,28 @@ vector<uint> read_parse(const string &infile) {
     return v;
 }
 
+vector<string> read_dict(const string &infile) {
+    vector<string> v;
+    FILE *dict = fopen(infile.c_str(), "rb");
+
+    fseek(dict, 0, SEEK_END);
+    size_t n = ftell(dict) / sizeof (char);
+    fseek(dict, 0, SEEK_SET);
+
+    char c;
+    string str;
+    for (uint i = 0; i < n; i++) {
+        fread(&c, sizeof (char), 1, dict);
+        if (c == 0x01){
+            v.push_back(str);
+            str = "";
+        } else {
+            str += c;
+        }
+    }
+    return v;
+}
+
 int_vector<> init_parse(const vector<uint> &il) {
     auto res = int_vector<>(il.size(), 1, 32);
     uint i = 0;

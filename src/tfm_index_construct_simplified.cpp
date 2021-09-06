@@ -1,9 +1,7 @@
 #include "functions.cpp"
 
 int main() {
-    string dict_file = "../data/yeast.fasta.dict";
-    // vector<string> dict = read_dict(dict_file);
-
+    vector<string> dict = read_dict("../data/yeast.fasta.dict");
     vector<uint> parse = read_parse("../data/yeast.fasta.parse");
     // vector<uint> parse = {1, 2, 1, 3, 1, 2, 1, 3, 1};
 

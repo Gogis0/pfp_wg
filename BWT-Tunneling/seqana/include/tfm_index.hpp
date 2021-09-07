@@ -122,6 +122,14 @@ public:
         return std::make_pair((size_type) 0, (size_type) 0);
     }
 
+    nav_type our_end() const {
+        auto end = std::make_pair((size_type) 0, (size_type) 0);
+        for (size_type i = 1; i < text_len; i++) {
+            backwardstep(end);
+        }
+        return end;
+    }
+
     //! returns the character preceding the current position
     value_type preceding_char(const nav_type &pos) const {
         return L[pos.first];

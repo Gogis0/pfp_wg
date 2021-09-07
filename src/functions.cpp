@@ -59,9 +59,9 @@ class wheeler_graph{
 public:
     uint n_vertices;
     uint n_edges;
-    vector<uint> ordering;
     vector<uint> source_nodes;
     vector<uint> destination_nodes;
+    vector<uint> ordering;
     vector<uint> labels;
     vector<uint> tunnel_num;
 
@@ -72,8 +72,9 @@ public:
 
     explicit wheeler_graph(const tfm_index<> &tfm) {
         n_vertices = tfm.L.size();
-        n_edges = tfm.din.size();
+        for (uint i = 0; i < n_vertices; i++) {ordering.push_back(i);}
 
+        n_edges = tfm.din.size();
         edge e = edge(0, 0, 0, 0);
         for (auto i = tfm.size(); i > 0; i--) {
             e = e.get_next(tfm);
@@ -84,6 +85,14 @@ public:
         }
 
     }
+
+//    uint backward_step(uint current, uint tunnel) {
+//        for (uint i = 0; i < n_edges; i++) {
+//            if (destination_nodes[i] == current && tunnel_num[i] == tunnel)
+//                return source_nodes[i];
+//        }
+//        return n_vertices;
+//    }
 
     bool is_valid() {
         for (uint i = 0; i < n_edges; i++) {
@@ -168,6 +177,27 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
     for (uint i = 0; i < n_edges; i++) {
         expand_edge(wg, 0, dict[wg.labels[0]]);
     }
+}
+
+//int cmp_vertices(wheeler_graph &wg, uint v1, uint v2, vector<uint> original_ordering) {
+//    if (original_ordering[v1] < original_ordering[v2]) {
+//        return -1;
+//    } else if (original_ordering[v2] < original_ordering[v1]) {
+//        return 1;
+//    }
+//    if (wg.labels[v1] < wg.labels[v2]) {
+//        return -1;
+//    } else if (wg.labels[v2] < wg.labels[v1]) {
+//        return 1;
+//    } else {
+//        v1 = wg.backward_step(v1, wg.tunnel_num[v1]);
+//        v2 = wg.backward_step(v2, wg.tunnel_num[v2]);
+//        return cmp_vertices(wg, v1, v2, original_ordering);
+//    }
+//}
+
+void wg_find_ordering(wheeler_graph &wg) {
+    wg.ordering = {2, 5, 6, 7, 0, 3, 1, 4};
 }
 
 vector<uint> read_parse(const string &infile) {

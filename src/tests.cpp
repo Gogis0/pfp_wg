@@ -114,3 +114,24 @@ Test(core, expand_graph_returns_sensible_answer) {
         "}" == wg.dot_repr()
     );
 }
+
+Test(core, finds_correct_ordering) {
+    vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
+    vector<string> dict = {"a", "ab", "ac"};
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    wg_find_ordering(wg);
+    cr_assert(wg.is_valid());
+}
+
+Test(core, test_our_end) {
+    vector<uint> parse = {1, 2, 1, 2};
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    auto p = tfm.our_end();
+    for (uint i = 0; i < tfm.size(); i++) {
+        cout << (uint32_t)tfm.backwardstep(p) << endl;
+    }
+}

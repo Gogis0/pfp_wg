@@ -132,6 +132,45 @@ Test(core, test_our_end) {
     my_construct(tfm, parse);
     auto p = tfm.our_end();
     for (uint i = 0; i < tfm.size(); i++) {
-        cout << (uint32_t)tfm.backwardstep(p) << endl;
+        // cout << tfm.preceding_char(p) << endl;
+        tfm.backwardstep(p);
     }
+}
+
+Test(core, test_backward) {
+    vector<uint> parse = {1, 2, 1, 2};
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    auto p = wg.end();
+    cr_assert(p.first == 0 && p.second == 0);
+    wg.backward(p);
+    cr_assert(p.first == 3 && p.second == 0);
+    wg.backward(p);
+    cr_assert(p.first == 1 && p.second == 0);
+    wg.backward(p);
+    cr_assert(p.first == 3 && p.second == 1);
+    wg.backward(p);
+    cr_assert(p.first == 2 && p.second == 0);
+    wg.backward(p);
+    cr_assert(p.first == 0 && p.second == 0);
+}
+
+Test(core, test_forward) {
+    vector<uint> parse = {1, 2, 1, 2};
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    auto p = wg.end();
+    cr_assert(p.first == 0 && p.second == 0);
+    wg.forward(p);
+    cr_assert(p.first == 2 && p.second == 0);
+    wg.forward(p);
+    cr_assert(p.first == 3 && p.second == 1);
+    wg.forward(p);
+    cr_assert(p.first == 1 && p.second == 0);
+    wg.forward(p);
+    cr_assert(p.first == 3 && p.second == 0);
+    wg.forward(p);
+    cr_assert(p.first == 0 && p.second == 0);
 }

@@ -51,6 +51,7 @@
 #include "../BWT-Tunneling/seqana/include/dbg_algorithms.hpp"
 
 using namespace std;
+using namespace sdsl;
 
 struct tfm_index_tag {
 };
@@ -143,7 +144,7 @@ public:
     //! Operation performs an backward step from current position.
     //! function sets posm to the new value and returns the result
     //! of preceding_char( pos ) before the backward step was performed
-    value_type backwardstep(nav_type &pos) const {
+    void backwardstep(nav_type &pos) const {
         size_type &i = pos.first; //create references into position pair
         size_type &o = pos.second;
 
@@ -165,17 +166,14 @@ public:
             i += o; //jump back offset
             o = 0;
         }
-        return c;
     };
 
-    //! serializes opbject
-    size_type serialize(std::ostream &out, sdsl::structure_tree_node *v,
-                        std::string name) const {
-
-        sdsl::structure_tree_node *child =
-                sdsl::structure_tree::add_child(v, name, sdsl::util::class_name(*this));
+    size_type serialize(
+        ostream &out, structure_tree_node *v, const string &name
+    ) const {
+        structure_tree_node *child = structure_tree::add_child(v, name, util::class_name(*this));
         size_type written_bytes = 0;
-        written_bytes += sdsl::write_member(text_len, out, child, "text_len");
+        written_bytes += write_member(text_len, out, child, "text_len");
 
         written_bytes += m_L.serialize(out, child, "L");
         written_bytes += sdsl::serialize(m_C, out, child, "C");
@@ -192,7 +190,6 @@ public:
         return written_bytes;
     };
 
-    //! loads a serialized object
     void load(std::istream &in) {
 
         sdsl::read_member(text_len, in);

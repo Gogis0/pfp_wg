@@ -55,6 +55,24 @@ public:
     }
 };
 
+uint my_select(const vector<uint> &v, uint elem, uint tier) {
+    for (uint i = 0; i < v.size(); i++) {
+        if (v[i] == elem) {
+            if (tier == 0) return i;
+            else tier--;
+        }
+    }
+    return UINT32_MAX;
+}
+
+uint my_rank(const vector<uint> &v, uint elem, uint pos) {
+    uint rank = 0;
+    for (uint i = 0; i < pos; i++) {
+        if (v[i] == elem) rank++;
+    }
+    return rank;
+}
+
 class wheeler_graph{
 public:
     uint n_vertices;
@@ -86,13 +104,21 @@ public:
 
     }
 
-//    uint backward_step(uint current, uint tunnel) {
-//        for (uint i = 0; i < n_edges; i++) {
-//            if (destination_nodes[i] == current && tunnel_num[i] == tunnel)
-//                return source_nodes[i];
-//        }
-//        return n_vertices;
-//    }
+    pair<uint, uint> end(){
+        return {0, 0};
+    };
+
+    void backward(pair<uint, uint> &pos) {
+        uint i = my_select(source_nodes, pos.first, pos.second); // from (source_nodes) select (pos.second)th (pos.first)
+        pos.first = destination_nodes[i];
+        pos.second = tunnel_num[i];
+    };
+
+    void forward(pair<uint, uint> &pos) {
+        uint i = my_select(destination_nodes, pos.first, pos.second);
+        pos.first = source_nodes[i];
+        pos.second = my_rank(source_nodes, pos.first, i);
+    };
 
     bool is_valid() {
         for (uint i = 0; i < n_edges; i++) {

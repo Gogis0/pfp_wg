@@ -8,28 +8,11 @@ int main() {
 
     tfm_index<> tfm;
     my_construct(tfm, parse);
-    // wheeler_graph wg = wheeler_graph(tfm);
-    // cout << wg.dot_repr() << endl;
+    wheeler_graph wg = wheeler_graph(tfm);
+    cout << wg.dot_repr() << endl;
+    auto p = wg.end();
+    cout << p.first << " " << p.second << endl;
 
-    cout << dot_repr_tfm(tfm) << endl;
-    cout << tfm.repr() << endl;
-//    cout << wg.dot_repr() << endl;
-//    if (wg.is_valid())
-//        cout << "Is wheeler graph\n" << endl;
-//    else
-//        cout << "Is not wheeler graph\n" << endl;
-//
-//    wg_unparse(wg, dict);
-//    // wg.ordering = {2, 5, 6, 7, 0, 3, 1, 4};
-//    for (uint i = wg.ordering.size(); i < wg.n_vertices; i++) {
-//        wg.ordering.push_back(i);
-//    }
-//
-//    cout << wg.dot_repr_ordered() << endl;
-//    if (wg.is_valid())
-//        cout << "Is wheeler graph\n" << endl;
-//    else
-//        cout << "Is not wheeler graph\n" << endl;
 
     return 0;
 }

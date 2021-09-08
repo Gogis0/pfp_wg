@@ -213,10 +213,12 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
 int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, vector<uint> original_ordering) {
     // precondition: vertices are not equal
     // v1 > v2 => 1, v1 < v2 => -1
-    if (original_ordering[v1.first] < original_ordering[v2.first]) {
-        return -1;
-    } else if (original_ordering[v2.first] < original_ordering[v1.first]) {
-        return 1;
+    if (v1.first < original_ordering.size() && v2.first < original_ordering.size()) {
+        if (original_ordering[v1.first] < original_ordering[v2.first]) {
+            return -1;
+        } else if (original_ordering[v2.first] < original_ordering[v1.first]) {
+            return 1;
+        }
     }
 
     if (wg.preceding_letter(v1) < wg.preceding_letter(v2)) {

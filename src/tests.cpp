@@ -172,3 +172,30 @@ Test(core, test_forward) {
     res = cmp_vertices(wg, p3, p2, {0, 1, 2, 3});
     cout << res << endl;
 }
+
+Test(core, compare_works_on_unparsed) {
+    vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
+    vector<string> dict = {"a", "ab", "ac"};
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+
+    vector<uint> ordering = {2, 5, 6, 7, 0, 3, 1, 4};
+    int res;
+    for (uint i = 0; i < wg.n_vertices; i++) {
+        for (uint j = i + 1; j < wg.n_vertices; j++) {
+            auto p1 = pair<uint, uint> {i, 0};
+            auto p2 = pair<uint, uint> {j, 0};
+            res = cmp_vertices(wg, p1, p2, {0, 1, 2, 3});
+            cout << i << " " << j << " " << res << endl;
+            if (ordering[i] < ordering[j])
+                cr_assert(res == -1);
+            else
+                cr_assert(res == 1);
+        }
+    }
+
+
+
+}

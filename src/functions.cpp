@@ -1,7 +1,7 @@
 #include <iostream>
 #include <utility>
 #include <sdsl/util.hpp>
-#include "../BWT-Tunneling/seqana/include/tfm_index.hpp"
+#include "tfm_index.hpp"
 
 using namespace std;
 using namespace sdsl;

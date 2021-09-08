@@ -8,9 +8,11 @@ int main() {
 
     tfm_index<> tfm;
     my_construct(tfm, parse);
-    wheeler_graph wg = wheeler_graph(tfm);
-    cout << wg.dot_repr() << endl;
+    // wheeler_graph wg = wheeler_graph(tfm);
+    // cout << wg.dot_repr() << endl;
 
+    cout << dot_repr_tfm(tfm) << endl;
+    cout << tfm.repr() << endl;
 //    cout << wg.dot_repr() << endl;
 //    if (wg.is_valid())
 //        cout << "Is wheeler graph\n" << endl;

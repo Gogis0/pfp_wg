@@ -161,16 +161,14 @@ Test(core, test_forward) {
     tfm_index<> tfm;
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
-    auto p = wg.end();
-    cr_assert(p.first == 0 && p.second == 0);
-    wg.forward(p);
-    cr_assert(p.first == 2 && p.second == 0);
-    wg.forward(p);
-    cr_assert(p.first == 3 && p.second == 1);
-    wg.forward(p);
-    cr_assert(p.first == 1 && p.second == 0);
-    wg.forward(p);
-    cr_assert(p.first == 3 && p.second == 0);
-    wg.forward(p);
-    cr_assert(p.first == 0 && p.second == 0);
+    int res;
+
+    auto p1 = pair<uint, uint> {0, 0};
+    auto p2 = pair<uint, uint> {1, 0};
+    res = cmp_vertices(wg, p1, p2, {0, 1, 2, 3});
+    cout << res << endl;
+
+    auto p3 = pair<uint, uint> {2, 0};
+    res = cmp_vertices(wg, p3, p2, {0, 1, 2, 3});
+    cout << res << endl;
 }

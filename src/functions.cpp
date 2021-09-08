@@ -120,6 +120,11 @@ public:
         pos.second = my_rank(source_nodes, pos.first, i);
     };
 
+    uint preceding_letter(const pair<uint,uint> &pos) {
+        uint i = my_select(destination_nodes, pos.first, pos.second);
+        return labels[i];
+    }
+
     bool is_valid() {
         for (uint i = 0; i < n_edges; i++) {
             for (uint j = 0; j < n_edges; j++) {
@@ -205,22 +210,25 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
     }
 }
 
-//int cmp_vertices(wheeler_graph &wg, uint v1, uint v2, vector<uint> original_ordering) {
-//    if (original_ordering[v1] < original_ordering[v2]) {
-//        return -1;
-//    } else if (original_ordering[v2] < original_ordering[v1]) {
-//        return 1;
-//    }
-//    if (wg.labels[v1] < wg.labels[v2]) {
-//        return -1;
-//    } else if (wg.labels[v2] < wg.labels[v1]) {
-//        return 1;
-//    } else {
-//        v1 = wg.backward_step(v1, wg.tunnel_num[v1]);
-//        v2 = wg.backward_step(v2, wg.tunnel_num[v2]);
-//        return cmp_vertices(wg, v1, v2, original_ordering);
-//    }
-//}
+int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, vector<uint> original_ordering) {
+    // precondition: vertices are not equal
+    // v1 > v2 => 1, v1 < v2 => -1
+    if (original_ordering[v1.first] < original_ordering[v2.first]) {
+        return -1;
+    } else if (original_ordering[v2.first] < original_ordering[v1.first]) {
+        return 1;
+    }
+
+    if (wg.preceding_letter(v1) < wg.preceding_letter(v2)) {
+        return -1;
+    } else if (wg.preceding_letter(v2) < wg.preceding_letter(v1)) {
+        return 1;
+    } else {
+        wg.forward(v1);
+        wg.forward(v2);
+        return cmp_vertices(wg, v1, v2, original_ordering);
+    }
+}
 
 void wg_find_ordering(wheeler_graph &wg) {
     wg.ordering = {2, 5, 6, 7, 0, 3, 1, 4};

@@ -203,13 +203,6 @@ void expand_edge(wheeler_graph &wg, uint edge, const string &label) {
     wg.remove_edge(edge);
 }
 
-void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
-    uint n_edges = wg.n_edges;
-    for (uint i = 0; i < n_edges; i++) {
-        expand_edge(wg, 0, dict[wg.labels[0]]);
-    }
-}
-
 int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, vector<uint> original_ordering) {
     // precondition: vertices are not equal
     // v1 > v2 => 1, v1 < v2 => -1
@@ -232,8 +225,57 @@ int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, ve
     }
 }
 
+vector<uint>::iterator partition(
+    vector<uint>::iterator start, vector<uint>::iterator end, wheeler_graph &wg, const vector<uint> &orig_ord
+) {
+    auto p = (start + (end - start)/2);
+    auto pivot = pair<uint, uint> {*p, 0};
+    auto i = start;
+
+    for (auto j = start; j < end; j++) {
+        if (j == p) continue;
+        auto cur_vert = pair<uint, uint> {*j, 0};
+        // if cur_vert <= pivot:
+        if (cmp_vertices(wg, cur_vert, pivot, orig_ord) == -1) {
+            swap(*i, *j);
+            i++;
+        }
+    }
+    swap(*p, *i);
+    return i;
+}
+
+void my_sort(
+    vector<uint>::iterator start, vector<uint>::iterator end, wheeler_graph &wg, const vector<uint> &orig_ord
+) {
+    if ((end - start) <= 1) return;
+    auto middle = partition(start, end, wg, orig_ord);
+    my_sort(start, middle, wg, orig_ord);
+    my_sort(middle + 1, end, wg, orig_ord);
+}
+
+vector<uint> inverse_permutation(const vector<uint> &v) {
+    vector<uint> res(v.size(), 0);
+    for (uint i = 0; i < v.size(); i++) {
+        res[v[i]] = i;
+    }
+    return res;
+}
+
 void wg_find_ordering(wheeler_graph &wg) {
-    wg.ordering = {2, 5, 6, 7, 0, 3, 1, 4};
+    vector<uint> original_ordering = wg.ordering;
+    vector<uint> new_ordering;
+    for (uint i = 0; i < wg.n_vertices; i++) {new_ordering.push_back(i);}
+    my_sort(new_ordering.begin(), new_ordering.end(), wg, original_ordering);
+    wg.ordering = inverse_permutation(new_ordering);
+}
+
+void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
+    uint n_edges = wg.n_edges;
+    for (uint i = 0; i < n_edges; i++) {
+        expand_edge(wg, 0, dict[wg.labels[0]]);
+    }
+    wg_find_ordering(wg);
 }
 
 vector<uint> read_parse(const string &infile) {

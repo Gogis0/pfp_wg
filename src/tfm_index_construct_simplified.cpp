@@ -9,9 +9,11 @@ int main() {
     tfm_index<> tfm;
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
-    cout << wg.dot_repr() << endl;
-    auto p = wg.end();
-    cout << p.first << " " << p.second << endl;
+    cout << wg.ordering << endl;
+    cout << wg.dot_repr_ordered() << endl;
+    wg_unparse(wg, dict);
+    cout << wg.dot_repr_ordered() << endl;
+    cout << (wg.is_valid()? "is valid" : "is invalid") << endl;
 
 
     return 0;

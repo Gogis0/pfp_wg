@@ -166,11 +166,11 @@ Test(core, test_forward) {
     auto p1 = pair<uint, uint> {0, 0};
     auto p2 = pair<uint, uint> {1, 0};
     res = cmp_vertices(wg, p1, p2, {0, 1, 2, 3});
-    cout << res << endl;
+    cr_assert(res == -1);
 
     auto p3 = pair<uint, uint> {2, 0};
     res = cmp_vertices(wg, p3, p2, {0, 1, 2, 3});
-    cout << res << endl;
+    cr_assert(res == 1);
 }
 
 Test(core, compare_works_on_unparsed) {
@@ -188,7 +188,7 @@ Test(core, compare_works_on_unparsed) {
             auto p1 = pair<uint, uint> {i, 0};
             auto p2 = pair<uint, uint> {j, 0};
             res = cmp_vertices(wg, p1, p2, {0, 1, 2, 3});
-            cout << i << " " << j << " " << res << endl;
+            // cout << i << " " << j << " " << res << endl;
             if (ordering[i] < ordering[j])
                 cr_assert(res == -1);
             else

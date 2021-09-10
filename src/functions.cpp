@@ -104,25 +104,26 @@ public:
 
     }
 
-    pair<uint, uint> end(){
+    pair<uint, uint> end() const {
         return {0, 0};
     };
 
-    void backward(pair<uint, uint> &pos) {
+    void backward(pair<uint, uint> &pos) const {
         uint i = my_select(source_nodes, pos.first, pos.second); // from (source_nodes) select (pos.second)th (pos.first)
         pos.first = destination_nodes[i];
         pos.second = tunnel_num[i];
     };
 
-    void forward(pair<uint, uint> &pos) {
+    void forward(pair<uint, uint> &pos) const {
         uint i = my_select(destination_nodes, pos.first, pos.second);
         pos.first = source_nodes[i];
         pos.second = my_rank(source_nodes, pos.first, i);
     };
 
-    uint preceding_letter(const pair<uint,uint> &pos) {
-        uint i = my_select(destination_nodes, pos.first, pos.second);
+    uint preceding_letter(const pair<uint,uint> &pos) const {
+        uint i = my_select(destination_nodes, pos.first, 0);
         return labels[i];
+        // return labels[labels.size() - 1 - i];
     }
 
     bool is_valid() {
@@ -164,23 +165,11 @@ public:
         stringstream ss;
         ss << "digraph G {\n";
         for (uint i = 0; i < n_edges; i++) {
-            ss  << "\t" << source_nodes[i]
-                << " -> " << destination_nodes[i]
-                << " [label = \"t=" << tunnel_num[i]
-                << "\\nl=" << labels[i]
-                << "\"]\n";
-        }
-        ss << "}";
-        return ss.str();
-    }
-
-    string dot_repr_ordered() {
-        stringstream ss;
-        ss << "digraph G {\n";
-        for (uint i = 0; i < n_edges; i++) {
-            ss  << "\t" << ordering[source_nodes[i]]
-                << " -> " << ordering[destination_nodes[i]]
-                << " [label = \"t=" << tunnel_num[i]
+            ss  << "\t\"" << source_nodes[i];
+            if (source_nodes[i] < ordering.size()) ss << ":" << ordering[source_nodes[i]];
+            ss  << "\" -> \"" << destination_nodes[i];
+            if (source_nodes[i] < ordering.size()) ss << ":" << ordering[destination_nodes[i]];
+            ss  << "\" [label = \"t=" << tunnel_num[i]
                 << "\\nl=" << labels[i]
                 << "\"]\n";
         }
@@ -196,10 +185,10 @@ void expand_edge(wheeler_graph &wg, uint edge, const string &label) {
     for (i = 0; i < label.length()-1; i++) {
         uint new_vertex = wg.n_vertices;
         wg.n_vertices++;
-        wg.add_edge(current, new_vertex, label[i], wg.tunnel_num[i]);
+        wg.add_edge(current, new_vertex, label[label.length() - 1 - i], 0);
         current = new_vertex;
     }
-    wg.add_edge(current, end, label[i], wg.tunnel_num[i]);
+    wg.add_edge(current, end, label[0], wg.tunnel_num[edge]);  // (label.length() - 1 - i) == 0 at this point
     wg.remove_edge(edge);
 }
 
@@ -214,9 +203,11 @@ int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, ve
         }
     }
 
-    if (wg.preceding_letter(v1) < wg.preceding_letter(v2)) {
+    uint i = wg.preceding_letter(v1);
+    uint j = wg.preceding_letter(v2);
+    if (i < j) {
         return -1;
-    } else if (wg.preceding_letter(v2) < wg.preceding_letter(v1)) {
+    } else if (j < i) {
         return 1;
     } else {
         wg.forward(v1);
@@ -233,7 +224,10 @@ vector<uint>::iterator partition(
     auto i = start;
 
     for (auto j = start; j < end; j++) {
-        if (j == p) continue;
+        if (j == p) {
+            i++;
+            continue;
+        }
         auto cur_vert = pair<uint, uint> {*j, 0};
         // if cur_vert <= pivot:
         if (cmp_vertices(wg, cur_vert, pivot, orig_ord) == -1) {
@@ -241,12 +235,16 @@ vector<uint>::iterator partition(
             i++;
         }
     }
+    i--;
     swap(*p, *i);
     return i;
 }
 
 void my_sort(
-    vector<uint>::iterator start, vector<uint>::iterator end, wheeler_graph &wg, const vector<uint> &orig_ord
+    vector<uint>::iterator start,   // first element
+    vector<uint>::iterator end,     // past_the_end element
+    wheeler_graph &wg,
+    const vector<uint> &orig_ord
 ) {
     if ((end - start) <= 1) return;
     auto middle = partition(start, end, wg, orig_ord);
@@ -268,6 +266,7 @@ void wg_find_ordering(wheeler_graph &wg) {
     for (uint i = 0; i < wg.n_vertices; i++) {new_ordering.push_back(i);}
     my_sort(new_ordering.begin(), new_ordering.end(), wg, original_ordering);
     wg.ordering = inverse_permutation(new_ordering);
+    // wg.ordering = new_ordering;
 }
 
 void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
@@ -276,6 +275,19 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
         expand_edge(wg, 0, dict[wg.labels[0]]);
     }
     wg_find_ordering(wg);
+}
+
+string wg_string(const wheeler_graph &wg) {
+    stringstream ss;
+    auto pos = wg.end();
+    char c = (char)wg.preceding_letter(pos);
+    ss << c;
+    for (uint i = 0; i < wg.n_vertices; i++) {
+        wg.backward(pos);
+        c = (char)wg.preceding_letter(pos);
+        ss << c;
+    }
+    return ss.str();
 }
 
 vector<uint> read_parse(const string &infile) {

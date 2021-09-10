@@ -53,16 +53,6 @@ Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
     cr_expect(tfm2.din == tfm.din);
 }
 
-Test(core, naive_representation_is_the_same_as_tfm_representation) {
-    vector<uint> parse = {1, 2, 1, 2};
-
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
-    wheeler_graph wg = wheeler_graph(tfm);
-
-    cr_assert(wg.dot_repr() == dot_repr_tfm(tfm));
-}
-
 Test(core, we_can_read_dictionary) {
     vector<string> dict = read_dict("../data/yeast.fasta.dict");
     // for (const string &s: dict) {cout << s << endl;}
@@ -77,40 +67,42 @@ Test(core, we_can_read_dictionary) {
 Test(core, relabel_works) {
     wheeler_graph wg = wheeler_graph(2);
     wg.add_edge(0, 1, 0, 0);
-    vector<string> dict = {"ABAABAB"};
+    vector<string> dict = {"BABAABA"};
     expand_edge(wg, 0, dict[0]);
     cr_assert(
         "digraph G {\n"
-        "\t0 -> 2 [label = \"t=0\\nl=65\"]\n"
-        "\t2 -> 3 [label = \"t=0\\nl=66\"]\n"
-        "\t3 -> 4 [label = \"t=0\\nl=65\"]\n"
-        "\t4 -> 5 [label = \"t=0\\nl=65\"]\n"
-        "\t5 -> 6 [label = \"t=0\\nl=66\"]\n"
-        "\t6 -> 7 [label = \"t=0\\nl=65\"]\n"
-        "\t7 -> 1 [label = \"t=0\\nl=66\"]\n"
+        "\t\"0\" -> \"2\" [label = \"t=0\\nl=65\"]\n"
+        "\t\"2\" -> \"3\" [label = \"t=0\\nl=66\"]\n"
+        "\t\"3\" -> \"4\" [label = \"t=0\\nl=65\"]\n"
+        "\t\"4\" -> \"5\" [label = \"t=0\\nl=65\"]\n"
+        "\t\"5\" -> \"6\" [label = \"t=0\\nl=66\"]\n"
+        "\t\"6\" -> \"7\" [label = \"t=0\\nl=65\"]\n"
+        "\t\"7\" -> \"1\" [label = \"t=0\\nl=66\"]\n"
         "}" == wg.dot_repr()
     );
 }
 
 Test(core, expand_graph_returns_sensible_answer) {
-    vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
-    vector<string> dict = {"a", "ab", "ac"};
+    // T=abacabaca E={a}
+    vector<uint> parse = {1, 2, 1, 2};
+    vector<string> dict = {"a", "ab", "ac"}; // from aa, aba, aca
 
     tfm_index<> tfm;
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    wg.ordering = {};
     cr_assert(
         "digraph G {\n"
-        "\t0 -> 4 [label = \"t=0\\nl=97\"]\n"
-        "\t4 -> 3 [label = \"t=0\\nl=99\"]\n"
-        "\t3 -> 5 [label = \"t=0\\nl=97\"]\n"
-        "\t5 -> 1 [label = \"t=1\\nl=98\"]\n"
-        "\t1 -> 6 [label = \"t=1\\nl=97\"]\n"
-        "\t6 -> 3 [label = \"t=0\\nl=99\"]\n"
-        "\t3 -> 7 [label = \"t=0\\nl=97\"]\n"
-        "\t7 -> 2 [label = \"t=0\\nl=98\"]\n"
-        "\t2 -> 0 [label = \"t=0\\nl=97\"]\n"
+        "\t\"0\" -> \"4\" [label = \"t=0\\nl=99\"]\n"
+        "\t\"4\" -> \"3\" [label = \"t=0\\nl=97\"]\n"
+        "\t\"3\" -> \"5\" [label = \"t=0\\nl=98\"]\n"
+        "\t\"5\" -> \"1\" [label = \"t=0\\nl=97\"]\n"
+        "\t\"1\" -> \"6\" [label = \"t=0\\nl=99\"]\n"
+        "\t\"6\" -> \"3\" [label = \"t=1\\nl=97\"]\n"
+        "\t\"3\" -> \"7\" [label = \"t=0\\nl=98\"]\n"
+        "\t\"7\" -> \"2\" [label = \"t=0\\nl=97\"]\n"
+        "\t\"2\" -> \"0\" [label = \"t=0\\nl=97\"]\n"
         "}" == wg.dot_repr()
     );
 }
@@ -122,7 +114,6 @@ Test(core, finds_correct_ordering) {
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
-    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -174,28 +165,27 @@ Test(core, test_forward) {
 }
 
 Test(core, compare_works_on_unparsed) {
-    vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
+    // T=abacabaca, E={a}
+    // aba aca aba aca aa -> ab ac a -> a ab ac
     vector<string> dict = {"a", "ab", "ac"};
+    vector<uint> parse = {1, 2, 1, 2};  // 0 is implied
+
     tfm_index<> tfm;
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    cr_assert(wg.is_valid());
+}
 
-    vector<uint> ordering = {2, 5, 6, 7, 0, 3, 1, 4};
-    int res;
-    for (uint i = 0; i < wg.n_vertices; i++) {
-        for (uint j = i + 1; j < wg.n_vertices; j++) {
-            auto p1 = pair<uint, uint> {i, 0};
-            auto p2 = pair<uint, uint> {j, 0};
-            res = cmp_vertices(wg, p1, p2, {0, 1, 2, 3});
-            // cout << i << " " << j << " " << res << endl;
-            if (ordering[i] < ordering[j])
-                cr_assert(res == -1);
-            else
-                cr_assert(res == 1);
-        }
-    }
+Test(core, more_Es) {
+    // T=acbdacbda, E={a, b}
+    // acb bda acb bda aa -> ac bd a -> a ac bd
+    vector<string> dict = {"a", "ac", "bd"};
+    vector<uint> parse = {1, 2, 1, 2};  // 0 at the end is implied
 
-
-
+    tfm_index<> tfm;
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    cr_assert(wg.is_valid());
 }

@@ -38,7 +38,7 @@ target_compile_definitions(postproc PUBLIC Unique=0x78000000)
 
 
 # $(CXX) $(CXX_FLAGS) -o $@ $^ -ldl -DNOTHREADS
-add_executable(newscanNT bigrepair/ctph/newscan.cpp)
+add_executable(newscanNT src/newscan.cpp)
 target_link_libraries(newscanNT dl malloc_count utils)
 target_compile_definitions(newscanNT PUBLIC NOTHREADS)
 

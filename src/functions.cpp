@@ -92,7 +92,8 @@ public:
         n_vertices = tfm.L.size();
         for (uint i = 0; i < n_vertices; i++) {ordering.push_back(i);}
 
-        n_edges = tfm.din.size();
+        // n_edges = tfm.din.size();
+        n_edges = tfm.size();
         edge e = edge(0, 0, 0, 0);
         for (auto i = tfm.size(); i > 0; i--) {
             e = e.get_next(tfm);
@@ -282,7 +283,7 @@ string wg_string(const wheeler_graph &wg) {
     auto pos = wg.end();
     char c = (char)wg.preceding_letter(pos);
     ss << c;
-    for (uint i = 0; i < wg.n_vertices; i++) {
+    for (uint i = 0; i < wg.n_edges - 1; i++) {
         wg.backward(pos);
         c = (char)wg.preceding_letter(pos);
         ss << c;

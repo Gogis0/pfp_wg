@@ -1,9 +1,8 @@
 #include "functions.cpp"
 
 int main() {
-    // T=acbdacbda, E={a, b}
-    string T = "abeacdabeacda";
-    vector<string> E = {"a"};
+    string T = "CCACA$";
+    vector<string> E = {"C", "$"};
 
     vector<string> dict;
     vector<uint> full_parse;

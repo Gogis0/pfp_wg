@@ -220,3 +220,19 @@ Test(core, create_parse) {
     for (uint i = 0; i < correct_dict.size(); i++) cr_assert(correct_dict[i] == dict[i]);
     for (uint i = 0; i < correct_parse.size(); i++) cr_assert(correct_parse[i] == parse[i]);
 }
+
+Test(core, abeacdabeacda_example) {
+    string T = "abeacdabeacda";
+    vector<string> E = {"a"};
+
+    vector<string> dict;
+    vector<uint> full_parse;
+    fill_dict_and_parse(T, E, dict, full_parse);
+
+    tfm_index<> tfm;
+    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    cr_assert(wg.is_valid());
+}

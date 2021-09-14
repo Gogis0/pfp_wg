@@ -189,3 +189,18 @@ Test(core, more_Es) {
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
 }
+
+Test(core, create_parse) {
+    string T = "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
+
+    vector<string> dict = {
+                  "$$$$", //  7   -> 0
+        "CACCCACACACACA", //  4   -> 1
+          "CACCCACACACA", //  5   -> 2
+               "CACCACA", //  2   -> 3
+              "CACCCACA", //  6   -> 4
+                  "$CCA", //  1   -> 5
+                 "CACCA", //  3   -> 6
+    };
+    vector<uint> parse = {5, 6, 4, 4, 6, 3, 6, 6, 2, 6, 6, 4, 4, 6, 3, 6, 6, 1};
+}

@@ -187,34 +187,33 @@ void expand_edge(wheeler_graph &wg, uint edge, const string &label) {
         uint new_vertex = wg.n_vertices;
         wg.n_vertices++;
         wg.add_edge(current, new_vertex, label[label.length() - 1 - i], 0);
+        // wg.add_edge(current, new_vertex, label[i], 0);
         current = new_vertex;
     }
     wg.add_edge(current, end, label[0], wg.tunnel_num[edge]);  // (label.length() - 1 - i) == 0 at this point
+    // wg.add_edge(current, end, label[i], wg.tunnel_num[edge]);
     wg.remove_edge(edge);
 }
 
 int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, vector<uint> original_ordering) {
     // precondition: vertices are not equal
-    // v1 > v2 => 1, v1 < v2 => -1
-    if (v1.first < original_ordering.size() && v2.first < original_ordering.size()) {
-        if (original_ordering[v1.first] < original_ordering[v2.first]) {
-            return -1;
-        } else if (original_ordering[v2.first] < original_ordering[v1.first]) {
-            return 1;
-        }
+    uint i, j;
+    i = wg.preceding_letter(v1);
+    j = wg.preceding_letter(v2);
+    if (i < j) { return -1; }
+    if (i > j) { return 1; }
+
+    uint n = original_ordering.size();
+    if (v1.first < n && v2.first < n) {
+        i = original_ordering[v1.first];
+        j = original_ordering[v2.first];
+        if (i < j) { return -1; }
+        if (i > j) { return 1; }
     }
 
-    uint i = wg.preceding_letter(v1);
-    uint j = wg.preceding_letter(v2);
-    if (i < j) {
-        return -1;
-    } else if (j < i) {
-        return 1;
-    } else {
-        wg.forward(v1);
-        wg.forward(v2);
-        return cmp_vertices(wg, v1, v2, original_ordering);
-    }
+    wg.forward(v1);
+    wg.forward(v2);
+    return cmp_vertices(wg, v1, v2, original_ordering);
 }
 
 vector<uint>::iterator partition(
@@ -267,7 +266,7 @@ void wg_find_ordering(wheeler_graph &wg) {
     for (uint i = 0; i < wg.n_vertices; i++) {new_ordering.push_back(i);}
     my_sort(new_ordering.begin(), new_ordering.end(), wg, original_ordering);
     wg.ordering = inverse_permutation(new_ordering);
-    // wg.ordering = new_ordering;
+    // for (uint i = 0; i < wg.n_vertices; i++) {wg.ordering[i] = wg.n_vertices - wg.ordering[i];}
 }
 
 void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
@@ -441,3 +440,70 @@ void my_construct(tfm_index<> &tfm,  vector<uint> &parse_vec) {
     sdsl::remove(tmp_file_name);
     // cout << "\n" << endl;
 }
+
+string reverse(const string &s) {
+    string res(s.length(), 'x');
+    for (uint i = 0; i < s.length(); i++) {
+        res[s.length() - 1 - i] = s[i];
+    }
+    return res;
+}
+
+bool cmp(const pair<string, uint> &p1, const pair<string, uint> &p2) {
+//    string s1 = reverse(p1.first);
+//    string s2 = reverse(p2.first);
+    string s1 = p1.first;
+    string s2 = p2.first;
+    return s1 < s2;
+}
+
+void create_parse(const string &T, const vector<string> &E, map<string, uint> &D, vector<uint> &P) {
+    uint p = 0;
+    uint phrase_start = 0;
+    for (uint i = phrase_start + 1; i < T.length(); i++) {
+        string tmp = T.substr(i, E[0].length());
+        for (const auto & j : E) {
+            if (tmp == j) {
+                string phrase = T.substr(phrase_start, i - phrase_start);
+                phrase_start = i;
+                auto it = D.find(phrase);
+                if (it == D.end()) {
+                    D.insert({phrase, p});
+                    P.push_back(p);
+                    p++;
+                } else {
+                    P.push_back(it->second);
+                }
+            }
+        }
+    }
+    D.insert({E[E.size()-1], p});
+    P.push_back(p);
+}
+
+void fill_dict_and_parse(const string &text, const vector<string> &E, vector<string> &dict, vector<uint> &parse){
+    map<string, uint> D;
+    vector<uint> P;
+
+    create_parse(text, E, D, P);
+
+    // sort dict
+    vector<pair<string, uint>> v;
+    v.reserve(D.size());
+    for (const auto & pair : D) {
+        v.emplace_back(pair.first, pair.second);
+    }
+    sort(v.begin(), v.end(), cmp);
+
+    vector<uint> remap = vector<uint>(P.size(), 0);
+    for (uint i = 0; i < D.size(); i++) {
+        dict.push_back(v[i].first);
+        remap[v[i].second] = i;
+    }
+
+    parse = vector<uint>(P.size(), 0);
+    for (uint i = 0; i < P.size(); i++) {
+        parse[i] = remap[P[i]];
+    }
+}
+

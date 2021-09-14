@@ -191,16 +191,27 @@ Test(core, more_Es) {
 }
 
 Test(core, create_parse) {
-    string T = "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
+    string T =
+        "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACC"
+        "ACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
+    vector<string> E = {"$CCA", "CACC", "$$$$"};
 
-    vector<string> dict = {
-                  "$$$$", //  7   -> 0
-        "CACCCACACACACA", //  4   -> 1
-          "CACCCACACACA", //  5   -> 2
-               "CACCACA", //  2   -> 3
-              "CACCCACA", //  6   -> 4
-                  "$CCA", //  1   -> 5
-                 "CACCA", //  3   -> 6
+    vector<string> dict;
+    vector<uint> parse;
+    fill_dict_and_parse(T, E, dict, parse);
+
+
+    vector<string> correct_dict = {
+        "$$$$",
+        "$CCA",
+        "CACCA",
+        "CACCACA",
+        "CACCCACA",
+        "CACCCACACACA",
+        "CACCCACACACACA"
     };
-    vector<uint> parse = {5, 6, 4, 4, 6, 3, 6, 6, 2, 6, 6, 4, 4, 6, 3, 6, 6, 1};
+    vector<uint> correct_parse = {1, 2, 4, 4, 2, 3, 2, 2, 5, 2, 2, 4, 4, 2, 3, 2, 2, 6, 0};
+
+    for (uint i = 0; i < correct_dict.size(); i++) cr_assert(correct_dict[i] == dict[i]);
+    for (uint i = 0; i < correct_parse.size(); i++) cr_assert(correct_parse[i] == parse[i]);
 }

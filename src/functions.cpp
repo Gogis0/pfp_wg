@@ -219,15 +219,11 @@ int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, ve
 vector<uint>::iterator partition(
     vector<uint>::iterator start, vector<uint>::iterator end, wheeler_graph &wg, const vector<uint> &orig_ord
 ) {
-    auto p = (start + (end - start)/2);
+    auto p = end - 1;
     auto pivot = pair<uint, uint> {*p, 0};
     auto i = start;
 
-    for (auto j = start; j < end; j++) {
-        if (j == p) {
-            i++;
-            continue;
-        }
+    for (auto j = start; j < p; j++) {
         auto cur_vert = pair<uint, uint> {*j, 0};
         // if cur_vert <= pivot:
         if (cmp_vertices(wg, cur_vert, pivot, orig_ord) == -1) {
@@ -235,7 +231,6 @@ vector<uint>::iterator partition(
             i++;
         }
     }
-    i--;
     swap(*p, *i);
     return i;
 }
@@ -246,8 +241,11 @@ void my_sort(
     wheeler_graph &wg,
     const vector<uint> &orig_ord
 ) {
+    // for (auto it = start; it < end; it++) cout << *it << "\t";
+    // cout << endl;
     if ((end - start) <= 1) return;
     auto middle = partition(start, end, wg, orig_ord);
+    // cout << "middle:" << *middle << endl;
     my_sort(start, middle, wg, orig_ord);
     my_sort(middle + 1, end, wg, orig_ord);
 }

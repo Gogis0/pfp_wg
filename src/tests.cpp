@@ -165,12 +165,14 @@ Test(core, test_forward) {
 }
 
 Test(core, compare_works_on_unparsed) {
-    // T=abacabaca, E={a}
-    // aba aca aba aca aa -> ab ac a -> a ab ac
-    vector<string> dict = {"a", "ab", "ac"};
-    vector<uint> parse = {1, 2, 1, 2};  // 0 is implied
+    string T = "abacabaca";
+    vector<string> E = {"a"};
+    vector<string> dict;
+    vector<uint> full_parse;
+    fill_dict_and_parse(T, E, dict, full_parse);
 
     tfm_index<> tfm;
+    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
@@ -178,12 +180,15 @@ Test(core, compare_works_on_unparsed) {
 }
 
 Test(core, more_Es) {
-    // T=acbdacbda, E={a, b}
-    // acb bda acb bda aa -> ac bd a -> a ac bd
-    vector<string> dict = {"a", "ac", "bd"};
-    vector<uint> parse = {1, 2, 1, 2};  // 0 at the end is implied
+    string T = "acbdacbda";
+    vector<string> E = {"b", "a"};
+
+    vector<string> dict;
+    vector<uint> full_parse;
+    fill_dict_and_parse(T, E, dict, full_parse);
 
     tfm_index<> tfm;
+    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);

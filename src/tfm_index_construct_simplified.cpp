@@ -2,8 +2,8 @@
 
 int main() {
     // T=acbdacbda, E={a, b}
-    string T = "acbdacbda";
-    vector<string> E = {"b", "a"};
+    string T = "abeacdabeacda";
+    vector<string> E = {"a"};
 
     vector<string> dict;
     vector<uint> full_parse;
@@ -20,7 +20,7 @@ int main() {
     cout << wg.dot_repr() << endl;
     wg_unparse(wg, dict);
     cout << wg.dot_repr() << endl;
-    cout << wg_string(wg) << endl;
+    cout << reverse(wg_string(wg)) << endl;
     cout << (wg.is_valid()?"valid":"invalid") << endl;
 
     return 0;

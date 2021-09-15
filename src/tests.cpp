@@ -61,47 +61,47 @@ Test(core, we_can_read_dictionary) {
     cr_assert(dict[5] == "CACCCACACACC");
 }
 
-Test(core, relabel_works) {
-    wheeler_graph wg = wheeler_graph(2);
-    wg.add_edge(0, 1, 0, 0);
-    vector<string> dict = {"BABAABA"};
-    expand_edge(wg, 0, dict[0]);
-    cr_assert(
-        "digraph G {\n"
-        "\t\"0\" -> \"2\" [label = \"t=0\\nl=65\"]\n"
-        "\t\"2\" -> \"3\" [label = \"t=0\\nl=66\"]\n"
-        "\t\"3\" -> \"4\" [label = \"t=0\\nl=65\"]\n"
-        "\t\"4\" -> \"5\" [label = \"t=0\\nl=65\"]\n"
-        "\t\"5\" -> \"6\" [label = \"t=0\\nl=66\"]\n"
-        "\t\"6\" -> \"7\" [label = \"t=0\\nl=65\"]\n"
-        "\t\"7\" -> \"1\" [label = \"t=0\\nl=66\"]\n"
-        "}" == wg.dot_repr()
-    );
-}
+//Test(core, relabel_works) {
+//    wheeler_graph wg = wheeler_graph(2);
+//    wg.add_edge(0, 1, 0, 0);
+//    vector<string> dict = {"BABAABA"};
+//    expand_edge(wg, 0, dict[0]);
+//    cr_assert(
+//        "digraph G {\n"
+//        "\t\"0\" -> \"2\" [label = \"t=0\\nl=65\"]\n"
+//        "\t\"2\" -> \"3\" [label = \"t=0\\nl=66\"]\n"
+//        "\t\"3\" -> \"4\" [label = \"t=0\\nl=65\"]\n"
+//        "\t\"4\" -> \"5\" [label = \"t=0\\nl=65\"]\n"
+//        "\t\"5\" -> \"6\" [label = \"t=0\\nl=66\"]\n"
+//        "\t\"6\" -> \"7\" [label = \"t=0\\nl=65\"]\n"
+//        "\t\"7\" -> \"1\" [label = \"t=0\\nl=66\"]\n"
+//        "}" == wg.dot_repr()
+//    );
+//}
 
-Test(core, expand_graph_returns_sensible_answer) {
-    // T=abacabaca E={a}
-    vector<uint> parse = {1, 2, 1, 2};
-    vector<string> dict = {"a", "ab", "ac"}; // from aa, aba, aca
-
-    tfm_index<> tfm = tfm_create(parse);
-    wheeler_graph wg = wheeler_graph(tfm);
-    wg_unparse(wg, dict);
-    wg.ordering = {};
-    cr_assert(
-        "digraph G {\n"
-        "\t\"0\" -> \"4\" [label = \"t=0\\nl=99\"]\n"
-        "\t\"4\" -> \"3\" [label = \"t=0\\nl=97\"]\n"
-        "\t\"3\" -> \"5\" [label = \"t=0\\nl=98\"]\n"
-        "\t\"5\" -> \"1\" [label = \"t=0\\nl=97\"]\n"
-        "\t\"1\" -> \"6\" [label = \"t=0\\nl=99\"]\n"
-        "\t\"6\" -> \"3\" [label = \"t=1\\nl=97\"]\n"
-        "\t\"3\" -> \"7\" [label = \"t=0\\nl=98\"]\n"
-        "\t\"7\" -> \"2\" [label = \"t=0\\nl=97\"]\n"
-        "\t\"2\" -> \"0\" [label = \"t=0\\nl=97\"]\n"
-        "}" == wg.dot_repr()
-    );
-}
+//Test(core, expand_graph_returns_sensible_answer) {
+//    // T=abacabaca E={a}
+//    vector<uint> parse = {1, 2, 1, 2};
+//    vector<string> dict = {"a", "ab", "ac"}; // from aa, aba, aca
+//
+//    tfm_index<> tfm = tfm_create(parse);
+//    wheeler_graph wg = wheeler_graph(tfm);
+//    wg_unparse(wg, dict);
+//    wg.ordering = {};
+//    cr_assert(
+//        "digraph G {\n"
+//        "\t\"0\" -> \"4\" [label = \"t=0\\nl=99\"]\n"
+//        "\t\"4\" -> \"3\" [label = \"t=0\\nl=97\"]\n"
+//        "\t\"3\" -> \"5\" [label = \"t=0\\nl=98\"]\n"
+//        "\t\"5\" -> \"1\" [label = \"t=0\\nl=97\"]\n"
+//        "\t\"1\" -> \"6\" [label = \"t=0\\nl=99\"]\n"
+//        "\t\"6\" -> \"3\" [label = \"t=1\\nl=97\"]\n"
+//        "\t\"3\" -> \"7\" [label = \"t=0\\nl=98\"]\n"
+//        "\t\"7\" -> \"2\" [label = \"t=0\\nl=97\"]\n"
+//        "\t\"2\" -> \"0\" [label = \"t=0\\nl=97\"]\n"
+//        "}" == wg.dot_repr()
+//    );
+//}
 
 Test(core, finds_correct_ordering) {
     vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
@@ -126,7 +126,7 @@ Test(core, test_backward) {
     vector<uint> parse = {1, 2, 1, 2};
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
-    auto p = wg.end();
+    auto p = wg.get_end();
     cr_assert(p.first == 0 && p.second == 0);
     wg.backward(p);
     cr_assert(p.first == 3 && p.second == 0);

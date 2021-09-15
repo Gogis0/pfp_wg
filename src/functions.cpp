@@ -47,13 +47,21 @@ public:
     string dot_repr() const {
         stringstream ss;
         ss  << "\t" << u
-            << " -> " << v
-            << " [label = \"t=" << t
+            << "\t-> " << v
+            << "\t[label = \"t=" << t
             << "\\nl=" << l
             << "\"]\n";
         return ss.str();
     }
 };
+
+string reverse(const string &s) {
+    string res(s.length(), 'x');
+    for (uint i = 0; i < s.length(); i++) {
+        res[s.length() - 1 - i] = s[i];
+    }
+    return res;
+}
 
 uint my_select(const vector<uint> &v, uint elem, uint tier) {
     for (uint i = 0; i < v.size(); i++) {
@@ -82,6 +90,7 @@ public:
     vector<uint> ordering;
     vector<uint> labels;
     vector<uint> tunnel_num;
+    pair<uint, uint> end = {0, 0};
 
     explicit wheeler_graph(uint V) {
         n_vertices = V;
@@ -105,8 +114,8 @@ public:
 
     }
 
-    pair<uint, uint> end() const {
-        return {0, 0};
+    pair<uint, uint> get_end() const {
+        return end;
     };
 
     void backward(pair<uint, uint> &pos) const {
@@ -168,9 +177,9 @@ public:
         for (uint i = 0; i < n_edges; i++) {
             ss  << "\t\"" << source_nodes[i];
             if (source_nodes[i] < ordering.size()) ss << ":" << ordering[source_nodes[i]];
-            ss  << "\" -> \"" << destination_nodes[i];
+            ss  << "\"\t-> \"" << destination_nodes[i];
             if (source_nodes[i] < ordering.size()) ss << ":" << ordering[destination_nodes[i]];
-            ss  << "\" [label = \"t=" << tunnel_num[i]
+            ss  << "\"\t[label = \"t=" << tunnel_num[i]
                 << "\\nl=" << labels[i]
                 << "\"]\n";
         }
@@ -269,15 +278,22 @@ void wg_find_ordering(wheeler_graph &wg) {
 
 void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
     uint n_edges = wg.n_edges;
+    string label;
     for (uint i = 0; i < n_edges; i++) {
-        expand_edge(wg, 0, dict[wg.labels[0]]);
+        label = dict[wg.labels[0]];
+        expand_edge(wg, 0, label);
     }
+    auto end = wg.get_end();
+    for (uint i = 0; i < label.length()-1; i++)
+        wg.forward(end);
+    wg.end = end;
+
     wg_find_ordering(wg);
 }
 
 string wg_string(const wheeler_graph &wg) {
     stringstream ss;
-    auto pos = wg.end();
+    auto pos = wg.get_end();
     char c = (char)wg.preceding_letter(pos);
     ss << c;
     for (uint i = 0; i < wg.n_edges - 1; i++) {
@@ -285,7 +301,7 @@ string wg_string(const wheeler_graph &wg) {
         c = (char)wg.preceding_letter(pos);
         ss << c;
     }
-    return ss.str();
+    return reverse(ss.str());
 }
 
 vector<uint> read_parse(const string &infile) {
@@ -367,7 +383,7 @@ void print_tfm(const tfm_index<> &tfm) {
     cout << endl << endl;
 }
 
-string dot_repr_tfm(const tfm_index<> &tfm) {
+string tfm_repr(const tfm_index<> &tfm) {
     edge e = edge(0, 0, 0, 0);
     stringstream ss;
     ss << "digraph G {\n";
@@ -441,73 +457,11 @@ tfm_index<> tfm_create(vector<uint> &parse_vec) {
     return tfm;
 }
 
-string reverse(const string &s) {
-    string res(s.length(), 'x');
-    for (uint i = 0; i < s.length(); i++) {
-        res[s.length() - 1 - i] = s[i];
-    }
-    return res;
-}
-
 bool cmp(const pair<string, uint> &p1, const pair<string, uint> &p2) {
-//    string s1 = reverse(p1.first);
-//    string s2 = reverse(p2.first);
     string s1 = p1.first;
     string s2 = p2.first;
     return s1 < s2;
 }
-
-//void create_parse(const string &T, const vector<string> &E, map<string, uint> &D, vector<uint> &P) {
-//    uint p = 0;
-//    uint phrase_start = 0;
-//    for (uint i = phrase_start + 1; i < T.length(); i++) {
-//        string tmp = T.substr(i, E[0].length());
-//        for (const auto & j : E) {
-//            if (tmp == j) {
-//                string phrase = T.substr(phrase_start, i - phrase_start);
-//                phrase_start = i;
-//                auto it = D.find(phrase);
-//                if (it == D.end()) {
-//                    D.insert({phrase, p});
-//                    P.push_back(p);
-//                    p++;
-//                } else {
-//                    P.push_back(it->second);
-//                }
-//            }
-//        }
-//    }
-//    D.insert({E[E.size()-1], p});
-//    P.push_back(p);
-//}
-
-//void fill_dict_and_parse(const string &text, const vector<string> &E, vector<string> &dict, vector<uint> &parse){
-//    map<string, uint> D;
-//    vector<uint> P;
-//
-//    create_parse(text, E, D, P);
-//
-//    // sort dict
-//    vector<pair<string, uint>> v;
-//    v.reserve(D.size());
-//    for (const auto & pair : D) {
-//        v.emplace_back(pair.first, pair.second);
-//    }
-//    sort(v.begin(), v.end(), cmp);
-//
-//    vector<uint> remap = vector<uint>(P.size(), 0);
-//    for (uint i = 0; i < D.size(); i++) {
-//        dict.push_back(v[i].first);
-//        remap[v[i].second] = i;
-//    }
-//
-//    parse = vector<uint>(P.size(), 0);
-//    for (uint i = 0; i < P.size(); i++) {
-//        parse[i] = remap[P[i]];
-//    }
-//
-//    parse = vector<uint>(parse.begin(), parse.end() - 1);
-//}
 
 void create_parse(const string &text, const vector<string> &triggers, map<string, uint> &dict, vector<uint> &parse) {
     uint w = triggers[0].length();
@@ -563,4 +517,3 @@ void fill_dict_and_parse(const string &text, const vector<string> &E, vector<str
     for (auto & word : dict) { word = word.substr(0, word.length() - w); }
     parse = vector<uint>(parse.begin(), parse.end() - 1);
 }
-

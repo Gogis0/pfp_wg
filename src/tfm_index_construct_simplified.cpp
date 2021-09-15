@@ -2,8 +2,8 @@
 
 int main() {
     string text =
-            "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACC"
-            "ACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
+        "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACC"
+        "ACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
     vector<string> triggers = {"$CCA", "CACC", "$$$$"};
 
     vector<uint> parse;
@@ -13,12 +13,15 @@ int main() {
     for (auto &str: dict) cout << str << endl;
 
     tfm_index<> tfm = tfm_create(parse);
-    cout << dot_repr_tfm(tfm) << endl;
+    cout << tfm_repr(tfm) << endl;
+
     wheeler_graph wg = wheeler_graph(tfm);
     cout << wg.dot_repr() << endl;
+
     wg_unparse(wg, dict);
     cout << wg.dot_repr() << endl;
-    cout << reverse(wg_string(wg)) << endl;
+    cout << wg_string(wg) << endl;
+
     cout << (wg.is_valid()?"valid":"invalid") << endl;
 
     return 0;

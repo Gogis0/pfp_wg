@@ -1,18 +1,18 @@
 #include "functions.cpp"
 
 int main() {
-    string T = "CCACA$";
-    vector<string> E = {"C", "$"};
+    string text =
+            "$CCACACCACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACACCACACC"
+            "ACACCCACACACCCACACACCACACCACACACCACACCACACCCACACACACA$$$$";
+    vector<string> triggers = {"$CCA", "CACC", "$$$$"};
 
+    vector<uint> parse;
     vector<string> dict;
-    vector<uint> full_parse;
-    fill_dict_and_parse(T, E, dict, full_parse);
-    cout << full_parse << endl;
+    fill_dict_and_parse(text, triggers, dict, parse);
+    cout << parse << endl;
     for (auto &str: dict) cout << str << endl;
 
     tfm_index<> tfm;
-    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
-    cout << parse << endl;
     my_construct(tfm, parse);
     cout << dot_repr_tfm(tfm) << endl;
     wheeler_graph wg = wheeler_graph(tfm);

@@ -179,7 +179,7 @@ Test(core, compare_works_on_unparsed) {
     cr_assert(wg.is_valid());
 }
 
-Test(core, more_Es) {
+Test(core, more_triggers) {
     string T = "acbdacbda";
     vector<string> E = {"b", "a"};
 
@@ -209,13 +209,13 @@ Test(core, create_parse) {
     vector<string> correct_dict = {
         "$$$$",
         "$CCA",
-        "CACCA",
         "CACCACA",
-        "CACCCACA",
+        "CACCA",
+        "CACCCACACACACA",
         "CACCCACACACA",
-        "CACCCACACACACA"
+        "CACCCACA"
     };
-    vector<uint> correct_parse = {1, 2, 4, 4, 2, 3, 2, 2, 5, 2, 2, 4, 4, 2, 3, 2, 2, 6, 0};
+    vector<uint> correct_parse = {1, 3, 6, 6, 3, 2, 3, 3, 5, 3, 3, 6, 6, 3, 2, 3, 3, 4};
 
     for (uint i = 0; i < correct_dict.size(); i++) cr_assert(correct_dict[i] == dict[i]);
     for (uint i = 0; i < correct_parse.size(); i++) cr_assert(correct_parse[i] == parse[i]);
@@ -231,6 +231,21 @@ Test(core, abeacdabeacda_example) {
 
     tfm_index<> tfm;
     vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
+    my_construct(tfm, parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    cr_assert(wg.is_valid());
+}
+
+Test(core, CCACA$_example) {
+    string text = "CCACA$";
+    vector<string> triggers = {"C", "$"};
+
+    vector<uint> parse;
+    vector<string> dict;
+    fill_dict_and_parse(text, triggers, dict, parse);
+
+    tfm_index<> tfm;
     my_construct(tfm, parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);

@@ -455,28 +455,81 @@ bool cmp(const pair<string, uint> &p1, const pair<string, uint> &p2) {
     return s1 < s2;
 }
 
-void create_parse(const string &T, const vector<string> &E, map<string, uint> &D, vector<uint> &P) {
+//void create_parse(const string &T, const vector<string> &E, map<string, uint> &D, vector<uint> &P) {
+//    uint p = 0;
+//    uint phrase_start = 0;
+//    for (uint i = phrase_start + 1; i < T.length(); i++) {
+//        string tmp = T.substr(i, E[0].length());
+//        for (const auto & j : E) {
+//            if (tmp == j) {
+//                string phrase = T.substr(phrase_start, i - phrase_start);
+//                phrase_start = i;
+//                auto it = D.find(phrase);
+//                if (it == D.end()) {
+//                    D.insert({phrase, p});
+//                    P.push_back(p);
+//                    p++;
+//                } else {
+//                    P.push_back(it->second);
+//                }
+//            }
+//        }
+//    }
+//    D.insert({E[E.size()-1], p});
+//    P.push_back(p);
+//}
+
+//void fill_dict_and_parse(const string &text, const vector<string> &E, vector<string> &dict, vector<uint> &parse){
+//    map<string, uint> D;
+//    vector<uint> P;
+//
+//    create_parse(text, E, D, P);
+//
+//    // sort dict
+//    vector<pair<string, uint>> v;
+//    v.reserve(D.size());
+//    for (const auto & pair : D) {
+//        v.emplace_back(pair.first, pair.second);
+//    }
+//    sort(v.begin(), v.end(), cmp);
+//
+//    vector<uint> remap = vector<uint>(P.size(), 0);
+//    for (uint i = 0; i < D.size(); i++) {
+//        dict.push_back(v[i].first);
+//        remap[v[i].second] = i;
+//    }
+//
+//    parse = vector<uint>(P.size(), 0);
+//    for (uint i = 0; i < P.size(); i++) {
+//        parse[i] = remap[P[i]];
+//    }
+//
+//    parse = vector<uint>(parse.begin(), parse.end() - 1);
+//}
+
+void create_parse(const string &text, const vector<string> &triggers, map<string, uint> &dict, vector<uint> &parse) {
+    uint w = triggers[0].length();
     uint p = 0;
     uint phrase_start = 0;
-    for (uint i = phrase_start + 1; i < T.length(); i++) {
-        string tmp = T.substr(i, E[0].length());
-        for (const auto & j : E) {
-            if (tmp == j) {
-                string phrase = T.substr(phrase_start, i - phrase_start);
+    for (uint i = phrase_start + 1; i < text.length(); i++) {
+        string substr = text.substr(i, w);
+        for (const auto & trigger : triggers) {
+            if (substr == trigger) {
+                string phrase = text.substr(phrase_start, i + w - phrase_start);
                 phrase_start = i;
-                auto it = D.find(phrase);
-                if (it == D.end()) {
-                    D.insert({phrase, p});
-                    P.push_back(p);
+                auto it = dict.find(phrase);
+                if (it == dict.end()) {
+                    dict.insert({phrase, p});
+                    parse.push_back(p);
                     p++;
                 } else {
-                    P.push_back(it->second);
+                    parse.push_back(it->second);
                 }
             }
         }
     }
-    D.insert({E[E.size()-1], p});
-    P.push_back(p);
+    dict.insert({triggers[triggers.size() - 1] + triggers[0], p});
+    parse.push_back(p);
 }
 
 void fill_dict_and_parse(const string &text, const vector<string> &E, vector<string> &dict, vector<uint> &parse){
@@ -503,5 +556,9 @@ void fill_dict_and_parse(const string &text, const vector<string> &E, vector<str
     for (uint i = 0; i < P.size(); i++) {
         parse[i] = remap[P[i]];
     }
+
+    uint w = E[0].length();
+    for (auto & word : dict) { word = word.substr(0, word.length() - w); }
+    parse = vector<uint>(parse.begin(), parse.end() - 1);
 }
 

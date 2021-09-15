@@ -379,7 +379,8 @@ string dot_repr_tfm(const tfm_index<> &tfm) {
     return ss.str();
 }
 
-void my_construct(tfm_index<> &tfm,  vector<uint> &parse_vec) {
+tfm_index<> tfm_create(vector<uint> &parse_vec) {
+    tfm_index<> tfm;
     construct_config::byte_algo_sa = LIBDIVSUFSORT;
     cache_config config = cache_config(false, "../data/", "tmp");
 
@@ -437,6 +438,7 @@ void my_construct(tfm_index<> &tfm,  vector<uint> &parse_vec) {
     //remove buffer for L
     sdsl::remove(tmp_file_name);
     // cout << "\n" << endl;
+    return tfm;
 }
 
 string reverse(const string &s) {

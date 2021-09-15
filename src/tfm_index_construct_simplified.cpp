@@ -12,8 +12,7 @@ int main() {
     cout << parse << endl;
     for (auto &str: dict) cout << str << endl;
 
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     cout << dot_repr_tfm(tfm) << endl;
     wheeler_graph wg = wheeler_graph(tfm);
     cout << wg.dot_repr() << endl;

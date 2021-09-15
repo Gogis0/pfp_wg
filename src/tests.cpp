@@ -6,8 +6,7 @@ Test(external, empty_test) {}
 Test(core, tfm_construction_small_example) {
     vector<uint> parse = {1, 2, 1, 2};
 
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
 
     wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
     for (uint i=0; i < tfm.L.size(); i++) {
@@ -23,8 +22,7 @@ Test(core, tfm_construction_small_example) {
 Test(core, tfm_construction_easypeasy) {
     // this is            e  a  s  y  p  e  a  s  y
     vector<uint> parse = {2, 1, 4, 5, 3, 2, 1, 4, 5};
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
 
     wt_blcd<> wt = construct_from_vector({5, 2, 3, 0, 5, 1, 4});
     for (uint i=0; i < tfm.L.size(); i++) { cr_expect(tfm.L[i] == wt[i]); }
@@ -37,8 +35,7 @@ Test(core, tfm_construction_easypeasy) {
 Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
     vector<uint> parse = {1, 2, 1, 2};
 
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
 
     tfm_index<> tfm2;
     wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
@@ -87,8 +84,7 @@ Test(core, expand_graph_returns_sensible_answer) {
     vector<uint> parse = {1, 2, 1, 2};
     vector<string> dict = {"a", "ab", "ac"}; // from aa, aba, aca
 
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     wg.ordering = {};
@@ -110,8 +106,7 @@ Test(core, expand_graph_returns_sensible_answer) {
 Test(core, finds_correct_ordering) {
     vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
     vector<string> dict = {"a", "ab", "ac"};
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
@@ -119,8 +114,7 @@ Test(core, finds_correct_ordering) {
 
 Test(core, test_our_end) {
     vector<uint> parse = {1, 2, 1, 2};
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     auto p = tfm.our_end();
     for (uint i = 0; i < tfm.size(); i++) {
         // cout << tfm.preceding_char(p) << endl;
@@ -130,8 +124,7 @@ Test(core, test_our_end) {
 
 Test(core, test_backward) {
     vector<uint> parse = {1, 2, 1, 2};
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     auto p = wg.end();
     cr_assert(p.first == 0 && p.second == 0);
@@ -149,8 +142,7 @@ Test(core, test_backward) {
 
 Test(core, test_forward) {
     vector<uint> parse = {1, 2, 1, 2};
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     int res;
 
@@ -168,12 +160,10 @@ Test(core, compare_works_on_unparsed) {
     string T = "abacabaca";
     vector<string> E = {"a"};
     vector<string> dict;
-    vector<uint> full_parse;
-    fill_dict_and_parse(T, E, dict, full_parse);
+    vector<uint> parse;
+    fill_dict_and_parse(T, E, dict, parse);
 
-    tfm_index<> tfm;
-    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
@@ -184,12 +174,10 @@ Test(core, more_triggers) {
     vector<string> E = {"b", "a"};
 
     vector<string> dict;
-    vector<uint> full_parse;
-    fill_dict_and_parse(T, E, dict, full_parse);
+    vector<uint> parse;
+    fill_dict_and_parse(T, E, dict, parse);
 
-    tfm_index<> tfm;
-    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
@@ -204,7 +192,6 @@ Test(core, create_parse) {
     vector<string> dict;
     vector<uint> parse;
     fill_dict_and_parse(T, E, dict, parse);
-
 
     vector<string> correct_dict = {
         "$$$$",
@@ -226,12 +213,10 @@ Test(core, abeacdabeacda_example) {
     vector<string> E = {"a"};
 
     vector<string> dict;
-    vector<uint> full_parse;
-    fill_dict_and_parse(T, E, dict, full_parse);
+    vector<uint> parse;
+    fill_dict_and_parse(T, E, dict, parse);
 
-    tfm_index<> tfm;
-    vector<uint> parse = vector<uint>(full_parse.begin(), full_parse.end() - 1);
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
@@ -245,8 +230,7 @@ Test(core, CCACA$_example) {
     vector<string> dict;
     fill_dict_and_parse(text, triggers, dict, parse);
 
-    tfm_index<> tfm;
-    my_construct(tfm, parse);
+    tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());

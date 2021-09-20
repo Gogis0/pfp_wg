@@ -237,12 +237,20 @@ Test(core, CCACA$_example) {
 }
 
 Test(core, can_convert_wg_to_tfm) {
-    vector<uint> parse = {1, 2, 3, 1, 2, 3};
-    tfm_index<> tfm1 = tfm_create(parse);
-    wheeler_graph wg = wheeler_graph(tfm1);
-    tfm_index<> tfm2 = wg_to_tfm(wg);
+    vector<vector<uint>> parses = {
+            {1, 2, 3, 1, 2, 3},
+            {3, 2, 1, 3, 2, 1},
+            {1, 2, 3, 4, 1, 2, 3, 4, 2, 3, 4},
+    };
 
-    for (uint i=0; i < tfm1.L.size(); i++) { cr_expect(tfm1.L[i] == tfm2.L[i]); }
-    cr_expect(tfm1.dout == tfm2.dout);
-    cr_expect(tfm1.din == tfm2.din);
+    for (uint i = 0; i < parses.size(); i++) {
+        vector<uint> parse = parses[i];
+        tfm_index<> tfm1 = tfm_create(parse);
+        wheeler_graph wg = wheeler_graph(tfm1);
+        tfm_index<> tfm2 = wg_to_tfm(wg);
+
+        for (uint j=0; j < tfm1.L.size(); j++) { cr_expect(tfm1.L[j] == tfm2.L[j]); }
+        cr_expect(tfm1.dout == tfm2.dout);
+        cr_expect(tfm1.din == tfm2.din);
+    }
 }

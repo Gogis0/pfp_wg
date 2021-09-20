@@ -353,10 +353,29 @@ int_vector<> init_parse(const vector<uint> &il) {
     return res;
 }
 
-wt_blcd<> construct_from_vector(initializer_list<uint32_t> il) {
+wt_blcd<> construct_from_il(initializer_list<uint32_t> il) {
     wt_blcd<> wt;
     const uint8_t size = wt_blcd<>::alphabet_category::WIDTH;
     int_vector<size> text = int_vector<size>(il);
+
+    string tmp_file_name = "tmp";
+    store_to_file(text, tmp_file_name);
+
+    int_vector_buffer<size> text_buf(tmp_file_name);
+    wt_blcd<> tmp(text_buf, text_buf.size());
+    wt.swap(tmp);
+    remove(tmp_file_name);
+    return wt;
+}
+
+wt_blcd<> construct_from_vector(const vector<uint> &v) {
+    wt_blcd<> wt;
+    const uint8_t size = wt_blcd<>::alphabet_category::WIDTH;
+    int_vector<size> text;
+    text.resize(v.size());
+    for (uint i = 0; i < v.size(); i++) {
+        text[i] = v[i];
+    }
 
     string tmp_file_name = "tmp";
     store_to_file(text, tmp_file_name);
@@ -516,4 +535,67 @@ void fill_dict_and_parse(const string &text, const vector<string> &E, vector<str
     uint w = E[0].length();
     for (auto & word : dict) { word = word.substr(0, word.length() - w); }
     parse = vector<uint>(parse.begin(), parse.end() - 1);
+}
+
+uint count_out_nodes(const wheeler_graph &wg, uint node) {
+    set<uint> s;
+    for (uint i=0; i < wg.n_edges; i++) {
+        if (wg.source_nodes[i] == node) {
+            s.insert(wg.destination_nodes[i]);
+        }
+    }
+    return s.size();
+}
+
+uint count_in_nodes(const wheeler_graph &wg, uint node) {
+    set<uint> s;
+    for (uint i=0; i < wg.n_edges; i++) {
+        if (wg.destination_nodes[i] == node) {
+            s.insert(wg.source_nodes[i]);
+        }
+    }
+    return s.size();
+}
+
+tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
+    vector<uint> labels;
+
+    vector<uint> inv_order = inverse_permutation(wg.ordering);
+    for (uint i = 0; i < inv_order.size(); i++) {
+        pair<uint, uint> p(inv_order[i], 0);
+        wg.backward(p);
+        labels.push_back(wg.preceding_letter(p));
+    }
+
+    bit_vector din(wg.n_edges, 0);
+    bit_vector dout(wg.n_edges, 0);
+
+    uint i = 0;
+    uint j = 0;
+    for (uint p = 0; p < wg.n_vertices; p++) {
+        dout[i] = 1;
+        din[j] = 1;
+
+        pair<uint, uint> pos(p, 0);
+        wg.forward(pos);
+        uint p_out_nodes = count_out_nodes(wg, pos.first);
+        i += p_out_nodes;
+
+        uint p_in_nodes = count_in_nodes(wg, p);
+        j += p_in_nodes;
+
+        p += p_out_nodes - 1;
+    }
+    dout[i] = 1;
+    din[j] = 1;
+    i++;
+    j++;
+    dout.resize(i);
+    din.resize(j);
+
+    tfm_index<> tfm;
+    wt_blcd<> wt1 = construct_from_vector(labels);
+    // wt_blcd<> wt2 = construct_from_il({3, 3, 0, 1, 2});
+    construct_tfm_index_tmp(tfm, wg.n_edges, move(wt1), move(dout), move(din));
+    return tfm;
 }

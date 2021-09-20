@@ -8,7 +8,7 @@ Test(core, tfm_construction_small_example) {
 
     tfm_index<> tfm = tfm_create(parse);
 
-    wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
+    wt_blcd<> wt = construct_from_il({2, 2, 0, 1});
     for (uint i=0; i < tfm.L.size(); i++) {
         cr_expect(tfm.L[i] == wt[i]);
     }
@@ -24,7 +24,7 @@ Test(core, tfm_construction_easypeasy) {
     vector<uint> parse = {2, 1, 4, 5, 3, 2, 1, 4, 5};
     tfm_index<> tfm = tfm_create(parse);
 
-    wt_blcd<> wt = construct_from_vector({5, 2, 3, 0, 5, 1, 4});
+    wt_blcd<> wt = construct_from_il({5, 2, 3, 0, 5, 1, 4});
     for (uint i=0; i < tfm.L.size(); i++) { cr_expect(tfm.L[i] == wt[i]); }
     bit_vector dout = int_vector<1>({1, 1, 1, 0, 1, 1, 1, 1});
     cr_expect(dout == tfm.dout);
@@ -38,7 +38,7 @@ Test(core, we_can_construct_the_same_tfm_from_parse_and_custom_vectors) {
     tfm_index<> tfm = tfm_create(parse);
 
     tfm_index<> tfm2;
-    wt_blcd<> wt = construct_from_vector({2, 2, 0, 1});
+    wt_blcd<> wt = construct_from_il({2, 2, 0, 1});
     bit_vector dout = int_vector<1>({1, 1, 0, 1, 1});
     bit_vector din  = int_vector<1>({1, 1, 1, 0, 1});
     uint64_t text_len = tfm.size();
@@ -234,4 +234,15 @@ Test(core, CCACA$_example) {
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
     cr_assert(wg.is_valid());
+}
+
+Test(core, can_convert_wg_to_tfm) {
+    vector<uint> parse = {1, 2, 3, 1, 2, 3};
+    tfm_index<> tfm1 = tfm_create(parse);
+    wheeler_graph wg = wheeler_graph(tfm1);
+    tfm_index<> tfm2 = wg_to_tfm(wg);
+
+    for (uint i=0; i < tfm1.L.size(); i++) { cr_expect(tfm1.L[i] == tfm2.L[i]); }
+    cr_expect(tfm1.dout == tfm2.dout);
+    cr_expect(tfm1.din == tfm2.din);
 }

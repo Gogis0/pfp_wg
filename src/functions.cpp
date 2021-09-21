@@ -195,13 +195,26 @@ void expand_edge(wheeler_graph &wg, uint edge, const string &label) {
     for (i = 0; i < label.length()-1; i++) {
         uint new_vertex = wg.n_vertices;
         wg.n_vertices++;
-        wg.add_edge(current, new_vertex, label[label.length() - 1 - i], 0);
-        // wg.add_edge(current, new_vertex, label[i], 0);
+        wg.add_edge(current, new_vertex, label[label.length() - 1 - i], wg.tunnel_num[edge]);
         current = new_vertex;
     }
     wg.add_edge(current, end, label[0], wg.tunnel_num[edge]);  // (label.length() - 1 - i) == 0 at this point
-    // wg.add_edge(current, end, label[i], wg.tunnel_num[edge]);
+}
+
+void expand_tunneled_edge(wheeler_graph &wg, uint edge, const string &label) {
+    uint source = wg.source_nodes[edge];
+    uint destination = wg.destination_nodes[edge];
+    uint tun = wg.tunnel_num[edge];
     wg.remove_edge(edge);
+
+    pair<uint, uint> p = {destination, 0};
+    uint current = p.first;
+    for (uint i = 0; i < label.length() - 1; i++) {
+        wg.forward(p);
+        wg.add_edge(p.first, current, label[i], tun);
+        current = p.first;
+    }
+    wg.add_edge(source, current, label[label.length() - 1], tun);
 }
 
 int cmp_vertices(wheeler_graph &wg, pair<uint, uint> v1, pair<uint, uint> v2, vector<uint> original_ordering) {
@@ -281,7 +294,13 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
     string label;
     for (uint i = 0; i < n_edges; i++) {
         label = dict[wg.labels[0]];
-        expand_edge(wg, 0, label);
+        if (wg.tunnel_num[0] == 0) {
+            expand_edge(wg, 0, label);
+            wg.remove_edge(0);
+        } else {
+            expand_tunneled_edge(wg, 0, label);
+        }
+        cout << wg.dot_repr() << endl;
     }
     auto end = wg.get_end();
     for (uint i = 0; i < label.length()-1; i++)

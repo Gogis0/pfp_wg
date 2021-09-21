@@ -61,23 +61,14 @@ Test(core, we_can_read_dictionary) {
     cr_assert(dict[5] == "CACCCACACACC");
 }
 
-//Test(core, relabel_works) {
-//    wheeler_graph wg = wheeler_graph(2);
-//    wg.add_edge(0, 1, 0, 0);
-//    vector<string> dict = {"BABAABA"};
-//    expand_edge(wg, 0, dict[0]);
-//    cr_assert(
-//        "digraph G {\n"
-//        "\t\"0\" -> \"2\" [label = \"t=0\\nl=65\"]\n"
-//        "\t\"2\" -> \"3\" [label = \"t=0\\nl=66\"]\n"
-//        "\t\"3\" -> \"4\" [label = \"t=0\\nl=65\"]\n"
-//        "\t\"4\" -> \"5\" [label = \"t=0\\nl=65\"]\n"
-//        "\t\"5\" -> \"6\" [label = \"t=0\\nl=66\"]\n"
-//        "\t\"6\" -> \"7\" [label = \"t=0\\nl=65\"]\n"
-//        "\t\"7\" -> \"1\" [label = \"t=0\\nl=66\"]\n"
-//        "}" == wg.dot_repr()
-//    );
-//}
+Test(core, relabel_works) {
+    wheeler_graph wg = wheeler_graph(2);
+    wg.add_edge(0, 1, 0, 0);
+    wg.add_edge(0, 1, 0, 1);
+    vector<string> dict = {"BABAABA"};
+    wg_unparse(wg, dict);
+    wg.dot_repr();
+}
 
 //Test(core, expand_graph_returns_sensible_answer) {
 //    // T=abacabaca E={a}

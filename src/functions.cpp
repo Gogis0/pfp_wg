@@ -576,14 +576,22 @@ uint count_in_nodes(const wheeler_graph &wg, uint node) {
     return s.size();
 }
 
-tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
-    vector<uint> labels;
+uint get_prev(const wheeler_graph &wg, uint node) {
+    pair<uint, uint> pos(node, 0);
+    wg.forward(pos);
+    return pos.first;
+}
 
+tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
     vector<uint> inv_order = inverse_permutation(wg.ordering);
-    for (uint i = 0; i < inv_order.size(); i++) {
-        pair<uint, uint> p(inv_order[i], 0);
-        wg.backward(p);
-        labels.push_back(wg.preceding_letter(p));
+
+    vector<uint> labels;
+    for (uint i = 0; i < wg.n_vertices; i++) {
+        uint node = inv_order[i];
+        pair<uint, uint> pos(node, 0);
+        wg.backward(pos);
+        uint letter = wg.preceding_letter(pos);
+        labels.push_back(letter);
     }
 
     bit_vector din(wg.n_edges, 0);
@@ -591,19 +599,20 @@ tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
 
     uint i = 0;
     uint j = 0;
-    for (uint p = 0; p < wg.n_vertices; p++) {
+    for (uint k = 0; k < wg.n_vertices; k++) {
         dout[i] = 1;
         din[j] = 1;
 
-        pair<uint, uint> pos(p, 0);
-        wg.forward(pos);
-        uint p_out_nodes = count_out_nodes(wg, pos.first);
-        i += p_out_nodes;
+        uint node = inv_order[k];
+        uint prev = get_prev(wg, node);
 
-        uint p_in_nodes = count_in_nodes(wg, p);
-        j += p_in_nodes;
+        uint prev_out_nodes = count_out_nodes(wg, prev);
+        i += prev_out_nodes;
 
-        p += p_out_nodes - 1;
+        uint node_in_nodes = count_in_nodes(wg, node);
+        j += node_in_nodes;
+
+        k += prev_out_nodes - 1;
     }
     dout[i] = 1;
     din[j] = 1;
@@ -614,7 +623,22 @@ tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
 
     tfm_index<> tfm;
     wt_blcd<> wt1 = construct_from_vector(labels);
-    // wt_blcd<> wt2 = construct_from_il({3, 3, 0, 1, 2});
     construct_tfm_index_tmp(tfm, wg.n_edges, move(wt1), move(dout), move(din));
     return tfm;
+}
+
+void print_order(const wheeler_graph &wg) {
+    vector<uint> inv_order = inverse_permutation(wg.ordering);
+    for (uint i = 0; i < wg.n_vertices; i++) {
+        uint node = inv_order[i];
+        pair<uint, uint> pos(node, 0);
+        wg.backward(pos);
+        uint letter = wg.preceding_letter(pos);
+        wg.forward(pos);
+        wg.forward(pos);
+        uint prev = pos.first;
+        uint prev_out_nodes = count_out_nodes(wg, pos.first);
+        uint node_in_nodes = count_in_nodes(wg, node);
+        cout << node << "\t" << prev << "\t" << prev_out_nodes << "\t" << node_in_nodes << "\t" << letter << endl;
+    }
 }

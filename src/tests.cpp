@@ -242,3 +242,29 @@ Test(core, can_convert_wg_to_tfm) {
         cr_expect(tfm1.din == tfm2.din);
     }
 }
+
+Test(core, can_convert_unparsed_wg_to_tfm) {
+    string T = "abacadabacada";
+    vector<string> E = {"a"};
+
+    vector<string> dict;
+    vector<uint> parse;
+    fill_dict_and_parse(T, E, dict, parse);
+
+    tfm_index<> tfm = tfm_create(parse);
+    wheeler_graph wg = wheeler_graph(tfm);
+    wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
+    tfm_index<> tfm2 = wg_to_tfm(wg);
+
+    wt_blcd<> wt = construct_from_il({100, 100, 97, 98, 99, 97, 97, 97, 97});
+    for (uint i=0; i < tfm.L.size(); i++) {
+        cr_expect(tfm2.L[i] == wt[i]);
+    }
+    bit_vector dout = int_vector<1>({1, 1, 1, 1, 1, 1, 0, 1, 1, 1});
+    cr_expect(dout == tfm2.dout);
+    bit_vector din  = int_vector<1>({1, 1, 1, 1, 1, 1, 1, 1, 0, 1});
+    cr_expect(din == tfm2.din);
+    cr_expect(tfm2.size() == 13);
+}

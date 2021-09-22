@@ -289,6 +289,13 @@ void wg_find_ordering(wheeler_graph &wg) {
     // for (uint i = 0; i < wg.n_vertices; i++) {wg.ordering[i] = wg.n_vertices - wg.ordering[i];}
 }
 
+void position_end(wheeler_graph &wg, const string &end_label) {
+    auto end = wg.get_end();
+    for (uint i = 0; i < end_label.length()-1; i++)
+        wg.forward(end);
+    wg.end = end;
+}
+
 void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
     uint n_edges = wg.n_edges;
     string label;
@@ -300,14 +307,7 @@ void wg_unparse(wheeler_graph &wg, vector<string> &dict) {
         } else {
             expand_tunneled_edge(wg, 0, label);
         }
-        cout << wg.dot_repr() << endl;
     }
-    auto end = wg.get_end();
-    for (uint i = 0; i < label.length()-1; i++)
-        wg.forward(end);
-    wg.end = end;
-
-    wg_find_ordering(wg);
 }
 
 string wg_string(const wheeler_graph &wg) {

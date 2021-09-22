@@ -65,34 +65,20 @@ Test(core, relabel_works) {
     wheeler_graph wg = wheeler_graph(2);
     wg.add_edge(0, 1, 0, 0);
     wg.add_edge(0, 1, 0, 1);
-    vector<string> dict = {"BABAABA"};
+    vector<string> dict = {"ABAC"};
     wg_unparse(wg, dict);
-    wg.dot_repr();
+    cr_assert(
+        "digraph G {\n"
+        "\t\"0\"\t-> \"2\"\t[label = \"t=0\\nl=67\"]\n"
+        "\t\"2\"\t-> \"3\"\t[label = \"t=0\\nl=65\"]\n"
+        "\t\"3\"\t-> \"4\"\t[label = \"t=0\\nl=66\"]\n"
+        "\t\"4\"\t-> \"1\"\t[label = \"t=0\\nl=65\"]\n"
+        "\t\"4\"\t-> \"1\"\t[label = \"t=1\\nl=65\"]\n"
+        "\t\"3\"\t-> \"4\"\t[label = \"t=1\\nl=66\"]\n"
+        "\t\"2\"\t-> \"3\"\t[label = \"t=1\\nl=65\"]\n"
+        "\t\"0\"\t-> \"2\"\t[label = \"t=1\\nl=67\"]\n"
+        "}" == wg.dot_repr());
 }
-
-//Test(core, expand_graph_returns_sensible_answer) {
-//    // T=abacabaca E={a}
-//    vector<uint> parse = {1, 2, 1, 2};
-//    vector<string> dict = {"a", "ab", "ac"}; // from aa, aba, aca
-//
-//    tfm_index<> tfm = tfm_create(parse);
-//    wheeler_graph wg = wheeler_graph(tfm);
-//    wg_unparse(wg, dict);
-//    wg.ordering = {};
-//    cr_assert(
-//        "digraph G {\n"
-//        "\t\"0\" -> \"4\" [label = \"t=0\\nl=99\"]\n"
-//        "\t\"4\" -> \"3\" [label = \"t=0\\nl=97\"]\n"
-//        "\t\"3\" -> \"5\" [label = \"t=0\\nl=98\"]\n"
-//        "\t\"5\" -> \"1\" [label = \"t=0\\nl=97\"]\n"
-//        "\t\"1\" -> \"6\" [label = \"t=0\\nl=99\"]\n"
-//        "\t\"6\" -> \"3\" [label = \"t=1\\nl=97\"]\n"
-//        "\t\"3\" -> \"7\" [label = \"t=0\\nl=98\"]\n"
-//        "\t\"7\" -> \"2\" [label = \"t=0\\nl=97\"]\n"
-//        "\t\"2\" -> \"0\" [label = \"t=0\\nl=97\"]\n"
-//        "}" == wg.dot_repr()
-//    );
-//}
 
 Test(core, finds_correct_ordering) {
     vector<uint> parse = {1, 2, 1, 2};  // aba aca aba aca
@@ -100,6 +86,8 @@ Test(core, finds_correct_ordering) {
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -157,6 +145,8 @@ Test(core, compare_works_on_unparsed) {
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -171,6 +161,8 @@ Test(core, more_triggers) {
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -210,6 +202,8 @@ Test(core, abeacdabeacda_example) {
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -224,6 +218,8 @@ Test(core, CCACA$_example) {
     tfm_index<> tfm = tfm_create(parse);
     wheeler_graph wg = wheeler_graph(tfm);
     wg_unparse(wg, dict);
+    position_end(wg, dict[0]);
+    wg_find_ordering(wg);
     cr_assert(wg.is_valid());
 }
 
@@ -232,6 +228,7 @@ Test(core, can_convert_wg_to_tfm) {
             {1, 2, 3, 1, 2, 3},
             {3, 2, 1, 3, 2, 1},
             {1, 2, 3, 4, 1, 2, 3, 4, 2, 3, 4},
+            {1, 2, 3, 4, 5, 1, 2, 3, 4, 5}
     };
 
     for (uint i = 0; i < parses.size(); i++) {

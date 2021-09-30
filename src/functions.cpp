@@ -505,7 +505,7 @@ void create_parse(const string &text, const vector<string> &triggers, map<string
     uint w = triggers[0].length();
     uint p = 0;
     uint phrase_start = 0;
-    for (uint i = phrase_start + 1; i < text.length(); i++) {
+    for (uint i = phrase_start + 1; i < text.length() - w + 1; i++) {
         string substr = text.substr(i, w);
         for (const auto & trigger : triggers) {
             if (substr == trigger) {
@@ -594,8 +594,8 @@ tfm_index<> wg_to_tfm(const wheeler_graph &wg) {
         labels.push_back(letter);
     }
 
-    bit_vector din(wg.n_edges, 0);
-    bit_vector dout(wg.n_edges, 0);
+    bit_vector din(wg.n_edges + 1, 0);
+    bit_vector dout(wg.n_edges + 1, 0);
 
     uint i = 0;
     uint j = 0;

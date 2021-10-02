@@ -1,6 +1,7 @@
 #include <iostream>
 #include <utility>
 #include <sdsl/util.hpp>
+#include <ctime>
 #include "tfm_index.hpp"
 
 using namespace std;
@@ -111,7 +112,6 @@ public:
             labels.push_back(e.l);
             tunnel_num.push_back(e.t);
         }
-
     }
 
     pair<uint, uint> get_end() const {
@@ -641,4 +641,12 @@ void print_order(const wheeler_graph &wg) {
         uint node_in_nodes = count_in_nodes(wg, node);
         cout << node << "\t" << prev << "\t" << prev_out_nodes << "\t" << node_in_nodes << "\t" << letter << endl;
     }
+}
+
+string loadfile(const string &filename) {
+    stringstream ss;
+    ifstream file(filename);
+    stringstream buffer;
+    buffer << file.rdbuf();
+    return buffer.str();
 }

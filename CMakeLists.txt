@@ -54,5 +54,8 @@ target_link_libraries(tfm_explore sdsl divsufsort divsufsort64)
 add_executable(tfm_index_construct_simplified src/tfm_index_construct_simplified.cpp)
 target_link_libraries(tfm_index_construct_simplified sdsl divsufsort divsufsort64)
 
+add_executable(run src/run.cpp)
+target_link_libraries(run sdsl divsufsort divsufsort64)
+
 add_executable(test src/tests.cpp)
 target_link_libraries(test sdsl divsufsort divsufsort64 criterion)

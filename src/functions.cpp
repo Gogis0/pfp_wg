@@ -71,6 +71,7 @@ uint my_select(const vector<uint> &v, uint elem, uint tier) {
             else tier--;
         }
     }
+    cout << elem << "\t" << tier << "\t are not in " << v << endl;
     return UINT32_MAX;
 }
 

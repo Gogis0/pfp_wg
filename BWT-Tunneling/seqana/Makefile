@@ -1,6 +1,7 @@
 include ../Make.helper
 
-DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
+#DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
+DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x
 TRIEEXECUTABLES = create_trie_input.x trie_construct.x mp_search.x
 
 all: $(DBGEXECUTABLES) $(TRIEEXECUTABLES)
@@ -18,9 +19,10 @@ tfm_index_invert_to_binary.x: include/tfm_index.hpp include/dbg_algorithms.hpp l
 	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
 	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/tfm_index_invert_to_binary.cpp -o tfm_index_invert_to_binary.x $(LIBS)
 
-dbg_edgespectrum.x: include/dbg_algorithms.hpp lib/dbg_edgespectrum.cpp
-	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
-	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/dbg_edgespectrum.cpp -o dbg_edgespectrum.x $(LIBS)
+# dbg_edgespectrum.x does not work yet due to char->int alphabet transformation
+#dbg_edgespectrum.x: include/dbg_algorithms.hpp lib/dbg_edgespectrum.cpp
+#	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+#	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/dbg_edgespectrum.cpp -o dbg_edgespectrum.x $(LIBS)
 
 #TRIE EXECUTABLES
 create_trie_input.x: lib/create_trie_input.cpp

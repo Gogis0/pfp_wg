@@ -118,7 +118,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
   if(arg.sampledSA & START_RUN) ssafile = open_aux_file(arg.basename,EXTSSA,"wb");
   if(arg.sampledSA & END_RUN) esafile = open_aux_file(arg.basename,EXTESA,"wb");
 
-  // compute sa and bwt of d and do some checking on them 
+  // compute SA and BWT of D and do some checking on them 
   uint_t *sa; int_t *lcp;
   compute_dict_bwt_lcp(d,dsize,dwords,arg.w,&sa,&lcp);
   // set d[0]==0 as this is the EOF char in the final BWT

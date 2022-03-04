@@ -19,18 +19,25 @@ takes 9n bytes of RAM. If this is a problem, just don't use the option -c and
 check the correctness of the BWT by some other means (for example inverting it)
 """
 
-dirname = os.path.dirname(os.path.abspath(__file__))
-parse_exe       =  os.path.join(dirname, "newscan.x")
-parseNT_exe     =  os.path.join(dirname, "newscanNT.x")
-parsebwt_exe    =  os.path.join(dirname, "bwtparse")
-parsebwt_exe64  =  os.path.join(dirname, "bwtparse64")
-pfbwt_exe       =  os.path.join(dirname, "pfbwt.x")
-pfbwtNT_exe     =  os.path.join(dirname, "pfbwtNT.x")
-pfbwt_exe64     =  os.path.join(dirname, "pfbwt64.x")
-pfbwtNT_exe64   =  os.path.join(dirname, "pfbwtNT64.x")
-bwt_exe         =  os.path.join(dirname, "simplebwt")
-bwt_exe64       =  os.path.join(dirname, "simplebwt64")
+# pf bwt commands
+dir_bigbwt = os.path.dirname(os.path.abspath(__file__))
+parse_exe       =  os.path.join(dir_bigbwt, "newscan.x")
+parseNT_exe     =  os.path.join(dir_bigbwt, "newscanNT.x")
+parsebwt_exe    =  os.path.join(dir_bigbwt, "bwtparse")
+parsebwt_exe64  =  os.path.join(dir_bigbwt, "bwtparse64")
+pfbwt_exe       =  os.path.join(dir_bigbwt, "pfbwt.x")
+pfbwtNT_exe     =  os.path.join(dir_bigbwt, "pfbwtNT.x")
+pfbwt_exe64     =  os.path.join(dir_bigbwt, "pfbwt64.x")
+pfbwtNT_exe64   =  os.path.join(dir_bigbwt, "pfbwtNT64.x")
+bwt_exe         =  os.path.join(dir_bigbwt, "simplebwt")
+bwt_exe64       =  os.path.join(dir_bigbwt, "simplebwt64")
 shasum_exe      =  "sha256sum"
+# tunneling commands
+tunneling_dir = os.path.abspath("../BWT-Tunneling/seqana/")
+parsetunneling  =  os.path.join(tunneling_dir, "tfm_index_construct.x")
+tunnelinginvert = os.path.join(tunneling_dir, "tfm_index_invert.x")
+
+
 
 
 def main():
@@ -101,6 +108,17 @@ def main():
       delete_temp_files(args,logfile,logfile_name)
       print("==== Done: Parsing output xz-compressed as requested")
       return
+
+    # ----------- computation of the tunneled WG of the parsing
+    command = "{exe} -i -sa DIVSUFSORT {file}.parse {file}.tunnel".format(
+        exe=os.path.join(tunneling_dir, parsetunneling), file=args.input
+    )
+    print("==== WG Tunneling. Command:", command)
+    start = time.time()
+    if(execute_command(command,logfile,logfile_name)!=True):
+      return
+    print("Elapsed time: {0:.4f}".format(time.time()-start));      
+    exit()
 
     # ----------- computation of the BWT of the parsing
     start = time.time()

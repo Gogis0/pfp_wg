@@ -75,3 +75,51 @@ tarfile:
 
 clean:
 	rm -f $(EXECS) $(EXECS_NT) *.o gsa/*.o
+	rm -f *.sdsl
+	rm -f *.x
+
+include ~/sdsl-lite/Make.helper
+LIBS = -lsdsl -ldivsufsort -ldivsufsort64
+
+#DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
+DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x tfm_generate_aux.x
+#TRIEEXECUTABLES = create_trie_input.x trie_construct.x mp_search.x
+TRIEEXECUTABLES = create_trie_input.x  mp_search.x
+
+all: $(DBGEXECUTABLES) $(TRIEEXECUTABLES)
+
+#DBG EXECUTABLES
+tfm_index_construct.x: include/tfm_index.hpp include/dbg_algorithms.hpp tfm_index_construct.cpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib tfm_index_construct.cpp -o tfm_index_construct.x $(LIBS)
+
+tfm_index_invert.x: include/tfm_index.hpp include/dbg_algorithms.hpp tfm_index_invert.cpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib tfm_index_invert.cpp -o tfm_index_invert.x $(LIBS)
+
+tfm_generate_aux.x: include/tfm_index.hpp tfm_generate_aux.cpp utils.o
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib utils.o tfm_generate_aux.cpp -o tfm_generate_aux.x $(LIBS)
+
+tfm_index_invert_to_binary.x: include/tfm_index.hpp include/dbg_algorithms.hpp tfm_index_invert_to_binary.cpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib tfm_index_invert_to_binary.cpp -o tfm_index_invert_to_binary.x $(LIBS)
+
+# dbg_edgespectrum.x does not work yet due to char->int alphabet transformation
+#dbg_edgespectrum.x: include/dbg_algorithms.hpp lib/dbg_edgespectrum.cpp
+#	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+#	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib lib/dbg_edgespectrum.cpp -o dbg_edgespectrum.x $(LIBS)
+
+#TRIE EXECUTABLES
+create_trie_input.x: create_trie_input.cpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib create_trie_input.cpp -o create_trie_input.x $(LIBS)
+
+trie_construct.x: trie_construct.cpp include/tries.hpp include/trie_xbwt.hpp include/trie_txbwt.hpp include/trie_construct_algorithms.hpp include/dbg_algorithms.hpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib trie_construct.cpp -o trie_construct.x $(LIBS)
+
+mp_search.x: mp_search.cpp include/tries.hpp include/trie_xbwt.hpp include/trie_txbwt.hpp
+	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
+	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib mp_search.cpp -o mp_search.x $(LIBS)
+

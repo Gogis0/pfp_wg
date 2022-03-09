@@ -37,25 +37,25 @@ using namespace sdsl;
 
 typedef typename sdsl::int_vector<>::size_type size_type;
 
+
+struct Dict {
+    uint8_t *d = NULL;  // pointer to the dictionary
+    long dsize = 0;     // dicionary size in symbols
+    int dwords = 0;     // the number of phrases of the dicionary
+};
+
 void printUsage( char **argv ) {
 	cerr << "USAGE: " << argv[0] << "w TFMFILE OCCFILE" << endl;
 	cerr << "TFMFILE:" << endl;
 	cerr << "  File where to store the serialized trie" << endl;
 };
 
-int main(int argc, char **argv) {
-	//check parameters
-	if (argc < 3) {
-		printUsage( argv );
-		cerr << "At least 2 parameters expected" << endl;
-		return 1;
-	}
-	// read dictionary file
-        FILE *g = open_aux_file(argv[2],EXTDICT,"rb");
-        fseek(g,0,SEEK_END);
+Dict read_dictionary(char *filename) {
+        FILE *g = open_aux_file(filename, EXTDICT,"rb");
+        fseek(g, 0, SEEK_END);
         long dsize = ftell(g);
-        if(dsize<0) die("ftell dictionary");
-        if(dsize<=1+4) die("invalid dictionary file");
+        if(dsize < 0) die("ftell dictionary");
+        if(dsize <= 1+4) die("invalid dictionary file");
         cout  << "Dictionary file size: " << dsize << endl;
         #if !M64
         if(dsize > 0x7FFFFFFE) {
@@ -67,29 +67,49 @@ int main(int argc, char **argv) {
 
         uint8_t *d = new uint8_t[dsize];
         rewind(g);
-        long e = fread(d,1,dsize,g);
+        long e = fread(d, 1, dsize, g);
         if(e!=dsize) die("fread");
         fclose(g);
 
+        int dwords = 0;
+        for (int i = 0; i < dsize; i++) {
+            if (d[i] == EndOfWord) dwords++;
+        }
+        cout << "Dictionary contains " << dwords << " words" << endl;
+        //retarted struct initialization, must recall a nicer way
+        Dict res;
+        res.d = d;
+        res.dsize = dsize;
+        res.dwords = dwords;
+        return res;
+}
+
+int main(int argc, char **argv) {
+	//check parameters
+	if (argc < 1) {
+		printUsage( argv );
+		cerr << "At least 2 parameters expected" << endl;
+		return 1;
+	}
+
+        struct Dict dict = read_dictionary(argv[1]);
+
 	//load tunneled fm index
 	tfm_index<> tfm;
-	load_from_file( tfm, argv[1] );
+	load_from_file( tfm, argv[2] );
         vector<vector<uint32_t>> phrase_sources(tfm.L.size());
-        vector<uint32_t> phrase_occs(dsize, 0);
+        vector<uint32_t> phrase_occs(dict.dwords, 0);
 
 	auto p = tfm.end();
         int last = 1;
-	for (size_type i = 1; i < tfm.L.size(); i++) {
-            //if (tfm.dout[i] == 1) last = i;
-            auto c = (uint)tfm.L[i];
-            //phrase_sources[last-1].push_back((uint)tfm.L[i]);
+	for (size_type i = 1; i < tfm.size(); i++) {
+            uint c = (uint)tfm.backwardstep(p);
             phrase_occs[c]++;
-            //cout << (uint)tfm.L[i] << " ";
 	}
 
         // write the numbers of occurrences for each phrase
         FILE *focc = fopen(argv[3], "wb");
-        for (uint32_t i = 0; i < dsize; i++) {
+        for (uint32_t i = 0; i < dict.dwords; i++) {
             size_t s = fwrite(&phrase_occs[i], sizeof(phrase_occs[i]), 1, focc);
             if (s != 1) {
                 cout << "Error writing to OCC file" << endl;
@@ -98,11 +118,5 @@ int main(int argc, char **argv) {
         }
         cout << "OCC file successfully written!" << endl;
 
-        // write 
-        /*
-	for (size_type i=0; i<tfm.size()-1; i++) {
-	    cout << S[i] << ' ';
-	}
-        */
-        delete d;
+        delete dict.d;
 }

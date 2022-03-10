@@ -39,9 +39,9 @@ typedef typename sdsl::int_vector<>::size_type size_type;
 
 
 struct Dict {
-    uint8_t *d = NULL;  // pointer to the dictionary
-    long dsize = 0;     // dicionary size in symbols
-    int dwords = 0;     // the number of phrases of the dicionary
+    uint8_t *d;  // pointer to the dictionary
+    long dsize;     // dicionary size in symbols
+    int dwords;     // the number of phrases of the dicionary
 };
 
 void printUsage( char **argv ) {
@@ -76,11 +76,8 @@ Dict read_dictionary(char *filename) {
             if (d[i] == EndOfWord) dwords++;
         }
         cout << "Dictionary contains " << dwords << " words" << endl;
-        //retarted struct initialization, must recall a nicer way
-        Dict res;
-        res.d = d;
-        res.dsize = dsize;
-        res.dwords = dwords;
+
+        Dict res = {d, dsize, dwords};
         return res;
 }
 

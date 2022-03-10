@@ -8,10 +8,18 @@ EXECS=bwtparse bwtparse64 simplebwt simplebwt64 newscan.x pscan.x pfbwt.x pfbwt6
 # executables not using threads (and therefore not needing the thread library)
 EXECS_NT=newscanNT.x pfbwtNT.x pfbwtNT64.x
 
+include ~/sdsl-lite/Make.helper
+LIBS = -lsdsl -ldivsufsort -ldivsufsort64
+
+#DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
+DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x tfm_generate_aux.x
+#TRIEEXECUTABLES = create_trie_input.x trie_construct.x mp_search.x
+TRIEEXECUTABLES = create_trie_input.x  mp_search.x
+
 # targets not producing a file declared phony
 .PHONY: all clean tarfile
 
-all: $(EXECS) $(EXECS_NT)
+all: $(EXECS) $(EXECS_NT) $(DBGEXECUTABLES) $(TRIEEXECUTABLES)
 
 gsa/gsacak.o: gsa/gsacak.c gsa/gsacak.h
 	$(CC) $(CFLAGS) -c -o $@ $<
@@ -77,16 +85,6 @@ clean:
 	rm -f $(EXECS) $(EXECS_NT) *.o gsa/*.o
 	rm -f *.sdsl
 	rm -f *.x
-
-include ~/sdsl-lite/Make.helper
-LIBS = -lsdsl -ldivsufsort -ldivsufsort64
-
-#DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
-DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x tfm_generate_aux.x
-#TRIEEXECUTABLES = create_trie_input.x trie_construct.x mp_search.x
-TRIEEXECUTABLES = create_trie_input.x  mp_search.x
-
-all: $(DBGEXECUTABLES) $(TRIEEXECUTABLES)
 
 #DBG EXECUTABLES
 tfm_index_construct.x: include/tfm_index.hpp include/dbg_algorithms.hpp tfm_index_construct.cpp

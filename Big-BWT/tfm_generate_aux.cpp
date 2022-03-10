@@ -39,7 +39,8 @@ typedef typename sdsl::int_vector<>::size_type size_type;
 
 
 struct Dict {
-    uint8_t *d;  // pointer to the dictionary
+    uint8_t *d;     // an array holding the dictionary
+    long *end;  // end[i] is the index of the ending symbol of the i-th phrase
     long dsize;     // dicionary size in symbols
     int dwords;     // the number of phrases of the dicionary
 };
@@ -72,12 +73,16 @@ Dict read_dictionary(char *filename) {
         fclose(g);
 
         int dwords = 0;
-        for (int i = 0; i < dsize; i++) {
-            if (d[i] == EndOfWord) dwords++;
-        }
+        for (int i = 0; i < dsize; i++) if (d[i] == EndOfWord) dwords++;
         cout << "Dictionary contains " << dwords << " words" << endl;
 
-        Dict res = {d, dsize, dwords};
+        long *end= new long[dwords];
+        int cnt = 0;
+        for (int i = 0; i < dsize; i++) {
+            if (d[i] == EndOfWord) end[cnt++] = i; 
+        }
+
+        Dict res = {d, end, dsize, dwords};
         return res;
 }
 
@@ -88,12 +93,18 @@ int main(int argc, char **argv) {
 		cerr << "At least 2 parameters expected" << endl;
 		return 1;
 	}
+        char *basename = argv[1];
+        struct Dict dict = read_dictionary(basename);
 
-        struct Dict dict = read_dictionary(argv[1]);
-
-	//load tunneled fm index
+	//load tunneled fm index, make it nicer later
+        char *name;
+        int e = asprintf(&name,"%s.%s",basename, EXTTFM);
+        if (e < 0) cerr << "Error while loading " << name << endl;
 	tfm_index<> tfm;
-	load_from_file( tfm, argv[2] );
+	load_from_file( tfm, name);
+        delete name;
+        cout << "Tunneled WG loaded." << endl;
+
         vector<vector<uint32_t>> phrase_sources(tfm.L.size());
         vector<uint32_t> phrase_occs(dict.dwords, 0);
 
@@ -105,7 +116,7 @@ int main(int argc, char **argv) {
 	}
 
         // write the numbers of occurrences for each phrase
-        FILE *focc = fopen(argv[3], "wb");
+        FILE *focc = open_aux_file(basename, EXTOCC, "wb");
         for (uint32_t i = 0; i < dict.dwords; i++) {
             size_t s = fwrite(&phrase_occs[i], sizeof(phrase_occs[i]), 1, focc);
             if (s != 1) {

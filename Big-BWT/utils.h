@@ -25,6 +25,7 @@
 #define EXTSA    "sa"
 #define EXTSSA   "ssa"
 #define EXTESA   "esa"
+#define EXTTFM   "tunnel"
 
 
 void die(const char *s);

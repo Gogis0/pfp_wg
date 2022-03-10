@@ -33,9 +33,8 @@ bwt_exe         =  os.path.join(dir_bigbwt, "simplebwt")
 bwt_exe64       =  os.path.join(dir_bigbwt, "simplebwt64")
 shasum_exe      =  "sha256sum"
 # tunneling commands
-tunneling_dir = os.path.abspath("../BWT-Tunneling/seqana/")
-parsetunneling  =  os.path.join(tunneling_dir, "tfm_index_construct.x")
-tunnelinginvert = os.path.join(tunneling_dir, "tfm_index_invert.x")
+parsetunneling  =  os.path.join(dir_bigbwt, "tfm_index_construct.x")
+tunnelinginvert = os.path.join(dir_bigbwt, "tfm_index_invert.x")
 
 
 
@@ -111,7 +110,7 @@ def main():
 
     # ----------- computation of the tunneled WG of the parsing
     command = "{exe} -i -sa DIVSUFSORT {file}.parse {file}.tunnel".format(
-        exe=os.path.join(tunneling_dir, parsetunneling), file=args.input
+        exe=os.path.join(dir_bigbwt, parsetunneling), file=args.input
     )
     print("==== WG Tunneling. Command:", command)
     start = time.time()

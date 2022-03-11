@@ -93,31 +93,36 @@ int main(int argc, char **argv) {
 		cerr << "At least 2 parameters expected" << endl;
 		return 1;
 	}
-        char *basename = argv[1];
+        int w = atoi(argv[1]);
+        char *basename = argv[2];
         struct Dict dict = read_dictionary(basename);
 
-	//load tunneled fm index, make it nicer later
+	//load a tunneled WG, make it nicer later
         char *name;
         int e = asprintf(&name,"%s.%s",basename, EXTTFM);
         if (e < 0) cerr << "Error while loading " << name << endl;
 	tfm_index<> tfm;
 	load_from_file( tfm, name);
         delete name;
-        cout << "Tunneled WG loaded." << endl;
+        cout << "Tunneled WG of size " << tfm.L.size() << " loaded." << endl;
+        return 0;
 
         vector<vector<uint32_t>> phrase_sources(tfm.L.size());
+        vector<vector<uint8_t>> phrase_outlabels(dict.dwords);
         vector<uint32_t> phrase_occs(dict.dwords, 0);
 
 	auto p = tfm.end();
-        int last = 1;
-	for (size_type i = 1; i < tfm.size(); i++) {
+        int last = 0;
+	for (size_type i = 0; i < tfm.size(); i++) {
             uint c = (uint)tfm.backwardstep(p);
             phrase_occs[c]++;
+            phrase_outlabels[last].push_back(dict.d[dict.end[c] - w]);
+            last = c;
 	}
 
         // write the numbers of occurrences for each phrase
         FILE *focc = open_aux_file(basename, EXTOCC, "wb");
-        for (uint32_t i = 0; i < dict.dwords; i++) {
+        for (int i = 0; i < dict.dwords; i++) {
             size_t s = fwrite(&phrase_occs[i], sizeof(phrase_occs[i]), 1, focc);
             if (s != 1) {
                 cout << "Error writing to OCC file" << endl;
@@ -125,6 +130,13 @@ int main(int argc, char **argv) {
             }
         }
         cout << "OCC file successfully written!" << endl;
-
+        for (size_type i = 0; i < dict.dwords; i++) {
+            //if (phrase_outlabels[i].size()==0) continue;
+            cout << phrase_occs[i] << endl;
+            for (uint j = 0; j < phrase_outlabels[i].size(); j++) {
+                cout << phrase_outlabels[i][j] << " ";
+            }
+            cout << endl;
+        }
         delete dict.d;
 }

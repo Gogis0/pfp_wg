@@ -53,7 +53,7 @@ struct tfm_index_tag {
 };
 
 //! a class representing a tunneled fm-index
-template<class t_wt_type =       sdsl::wt_blcd<>,
+template<class t_wt_type =       sdsl::wt_int<>,
         class t_bv_type =       typename t_wt_type::bit_vector_type,
         class t_rank_type =     typename t_bv_type::rank_1_type,
         class t_select_type =   typename t_bv_type::select_1_type>
@@ -63,7 +63,7 @@ public:
     typedef sdsl::byte_alphabet_tag alphabet_category;
     typedef sdsl::int_vector<>::size_type size_type;
 
-    typedef sdsl::int_vector<8> text_type;
+    typedef sdsl::int_vector<32> text_type;
     typedef typename t_wt_type::value_type value_type;
 
     typedef t_wt_type wt_type;
@@ -79,7 +79,7 @@ private:
     friend void construct_tfm_index(
             t_tfm_index_type &tfm_index,
             uint64_t text_len,
-            sdsl::int_vector_buffer<8> &&L_buf,
+            sdsl::int_vector_buffer<32> &&L_buf,
             sdsl::bit_vector &&dout,
             sdsl::bit_vector &&din
     );
@@ -87,7 +87,7 @@ private:
     friend void construct_tfm_index_tmp(
             tfm_index<> &tfm_index,
             uint64_t text_len,
-            sdsl::wt_blcd<> &&L,
+            sdsl::wt_int<> &&L,
             sdsl::bit_vector &&dout,
             sdsl::bit_vector &&din
     );
@@ -210,13 +210,13 @@ public:
 template<class t_index>
 void construct(t_index &idx, const std::string &file, sdsl::cache_config &config,
                uint8_t num_bytes, tfm_index_tag) {
-    assert(num_bytes == 1); //only byte input is allowed
+    //assert(num_bytes == 1); //only byte input is allowed // no it's not
 
     //create a normal fm index
-    sdsl::csa_wt<sdsl::wt_blcd<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;
+    sdsl::csa_wt<sdsl::wt_int<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;
     {
 
-        construct(csa, file, config, 1);
+        construct(csa, file, config, num_bytes);
     }
 
     //run construction algorithm
@@ -253,7 +253,7 @@ construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cach
     std::string tmp_key = sdsl::util::to_string(sdsl::util::pid()) + "_" + sdsl::util::to_string(sdsl::util::id());
     std::string tmp_file_name = sdsl::cache_file_name(tmp_key, config);
     {
-        sdsl::int_vector_buffer<8> L_buf(tmp_file_name, std::ios::out);
+        sdsl::int_vector_buffer<32> L_buf(tmp_file_name, std::ios::out);
 
         //remove redundant entries from L, dout and din
         size_type p = 0;
@@ -283,7 +283,7 @@ construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cach
 }
 
 template<class t_tfm_index_type>
-void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::int_vector_buffer<8> &&L_buf,
+void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::int_vector_buffer<32> &&L_buf,
                          sdsl::bit_vector &&dout, sdsl::bit_vector &&din) {
     //set original string size
     tfm_index.text_len = text_len;
@@ -310,7 +310,7 @@ void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::i
 void construct_tfm_index_tmp(
         tfm_index<> &tfm_index,
         uint64_t text_len,
-        sdsl::wt_blcd<> &&L,
+        sdsl::wt_int<> &&L,
         sdsl::bit_vector &&dout,
         sdsl::bit_vector &&din
 ) {

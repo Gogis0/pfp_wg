@@ -197,7 +197,7 @@ int main(int argc, char **argv) {
     {
         cache_config config(true, "./", util::basename(infile));
         int_vector<> parse = load_parse(infile);
-        print_vector(parse);
+        //print_vector(parse);
         csa_wt<wt_blcd_int<>> csa;
         construct_im(csa, parse);
         fm_size = size_in_bytes(csa);

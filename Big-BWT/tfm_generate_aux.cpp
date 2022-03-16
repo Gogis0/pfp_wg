@@ -39,10 +39,9 @@ typedef typename sdsl::int_vector<>::size_type size_type;
 
 
 struct Dict {
-    uint8_t *d;     // an array holding the dictionary
-    long *end;  // end[i] is the index of the ending symbol of the i-th phrase
-    long dsize;     // dicionary size in symbols
-    int dwords;     // the number of phrases of the dicionary
+    uint8_t *d = NULL;  // pointer to the dictionary
+    long dsize = 0;     // dicionary size in symbols
+    int dwords = 0;     // the number of phrases of the dicionary
 };
 
 void printUsage( char **argv ) {
@@ -73,16 +72,15 @@ Dict read_dictionary(char *filename) {
         fclose(g);
 
         int dwords = 0;
-        for (int i = 0; i < dsize; i++) if (d[i] == EndOfWord) dwords++;
-        cout << "Dictionary contains " << dwords << " words" << endl;
-
-        long *end= new long[dwords];
-        int cnt = 0;
         for (int i = 0; i < dsize; i++) {
-            if (d[i] == EndOfWord) end[cnt++] = i; 
+            if (d[i] == EndOfWord) dwords++;
         }
-
-        Dict res = {d, end, dsize, dwords};
+        cout << "Dictionary contains " << dwords << " words" << endl;
+        //retarted struct initialization, must recall a nicer way
+        Dict res;
+        res.d = d;
+        res.dsize = dsize;
+        res.dwords = dwords;
         return res;
 }
 
@@ -93,35 +91,26 @@ int main(int argc, char **argv) {
 		cerr << "At least 2 parameters expected" << endl;
 		return 1;
 	}
-        int w = atoi(argv[1]);
-        char *basename = argv[2];
-        struct Dict dict = read_dictionary(basename);
 
-	//load a tunneled WG, make it nicer later
-        char *name;
-        int e = asprintf(&name,"%s.%s",basename, EXTTFM);
-        if (e < 0) cerr << "Error while loading " << name << endl;
+        struct Dict dict = read_dictionary(argv[1]);
+
+	//load tunneled fm index
 	tfm_index<> tfm;
-	load_from_file( tfm, name);
-        delete name;
-        cout << "Tunneled WG of size " << tfm.L.size() << " loaded." << endl;
-        return 0;
-
+	load_from_file( tfm, argv[2] );
         vector<vector<uint32_t>> phrase_sources(tfm.L.size());
-        vector<vector<uint8_t>> phrase_outlabels(dict.dwords);
-        vector<uint32_t> phrase_occs(dict.dwords, 0);
+        vector<int> phrase_occs(dict.dwords, 0);
 
 	auto p = tfm.end();
-        int last = 0;
-	for (size_type i = 0; i < tfm.size(); i++) {
+        int last = -1;
+	for (size_type i = 1; i < tfm.size(); i++) {
             uint c = (uint)tfm.backwardstep(p);
             phrase_occs[c]++;
-            phrase_outlabels[last].push_back(dict.d[dict.end[c] - w]);
+            if (last != -1) phrase_sources[c].push_back(last);
             last = c;
 	}
 
         // write the numbers of occurrences for each phrase
-        FILE *focc = open_aux_file(basename, EXTOCC, "wb");
+        FILE *focc = fopen(argv[3], "wb");
         for (int i = 0; i < dict.dwords; i++) {
             size_t s = fwrite(&phrase_occs[i], sizeof(phrase_occs[i]), 1, focc);
             if (s != 1) {
@@ -130,13 +119,6 @@ int main(int argc, char **argv) {
             }
         }
         cout << "OCC file successfully written!" << endl;
-        for (size_type i = 0; i < dict.dwords; i++) {
-            //if (phrase_outlabels[i].size()==0) continue;
-            cout << phrase_occs[i] << endl;
-            for (uint j = 0; j < phrase_outlabels[i].size(); j++) {
-                cout << phrase_outlabels[i][j] << " ";
-            }
-            cout << endl;
-        }
+
         delete dict.d;
 }

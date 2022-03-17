@@ -26,6 +26,7 @@
 #include <deque>
 #include <utility>
 #include <vector>
+#include <cstdio>
 
 #include "tfm_index.hpp"
 
@@ -42,7 +43,7 @@ void printUsage( char **argv ) {
 
 int main(int argc, char **argv) {
 	//check parameters
-	if (argc != 2) {
+	if (argc != 3) {
 		printUsage( argv );
 		cerr << "At least 1 parameter expected" << endl;
 		return 1;
@@ -52,14 +53,17 @@ int main(int argc, char **argv) {
 	tfm_index<> tfm;
 	load_from_file( tfm, argv[1] );
 
-	uint *S = new uint[tfm.size()];
+	uint32_t *S = new uint32_t[tfm.size()];
 	S[tfm.size()-1] = 0;
 	auto p = tfm.end();
 	for (size_type i = 1; i < tfm.size(); i++) {
-	S[tfm.size() - i - 1] = (uint)tfm.backwardstep( p );
+            S[tfm.size() - i - 1] = (uint32_t)tfm.backwardstep( p );
 	}
-	for (size_type i=0; i<tfm.size()-1; i++) {
-	    cout << S[i] << ' ';
-	}
-	cout << endl;
+	for (size_type i = 0; i < tfm.size(); i++) {
+            cout << S[i] << " ";
+        }
+        cout << endl;
+        
+        FILE *fout = fopen(argv[2], "w");
+        fwrite(S, sizeof(uint32_t), tfm.size()-1, fout);
 }

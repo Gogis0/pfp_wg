@@ -122,20 +122,24 @@ int_vector<> load_parse(const string &infile) {
 
     fseek(parse, 0, SEEK_END);
     size_t n;
-    n = ftell(parse) / sizeof(int);
+    n = ftell(parse);
     fseek(parse, 0, SEEK_SET);
+    n = n/4;
 
     int_vector<> v(n, 0, 32);
-    int tmp;
+    uint32_t tmp, max = 0, min = (1 << 31) - 1;
     for (int i = 0; i < n; i++) {
-        fread(&tmp, sizeof(int), 1, parse);
+        fread(&tmp, sizeof(uint32_t), 1, parse);
         v[i] = tmp;
+        if (tmp > max) max = tmp;
+        if (tmp < min) min = tmp;
     }
-
+    cout << "Max parse id: " << max << endl;
+    cout << "Min parse id: " << min << endl;
     return v;
 }
 
-void print_vector(const int_vector<>& v) {
+void print_vector(const int_vector<>& v, int size) {
     cout << v << endl;
     cout << v.size() << endl;
 }
@@ -197,7 +201,7 @@ int main(int argc, char **argv) {
     {
         cache_config config(true, "./", util::basename(infile));
         int_vector<> parse = load_parse(infile);
-        //print_vector(parse);
+        print_vector(parse, parse.size());
         csa_wt<wt_blcd_int<>> csa;
         construct_im(csa, parse);
         fm_size = size_in_bytes(csa);
@@ -215,7 +219,11 @@ int main(int argc, char **argv) {
         cout << "tfm_index_size\t" << tfm_size << endl;
         cout << "min_dbg_k\t" << min_k << endl;
         cout << "min_dbg_edges\t" << min_edges << endl;
-        memory_monitor::write_memory_log<leet_format>(cout);
+        //cout << "L:  " << tfm.L << endl;
+        //cout << "C:  " << tfm.C  << endl;
+        //cout << "Din:  " << tfm.din << endl;
+        //cout << "Dout: " << tfm.dout << endl;
+        //memory_monitor::write_memory_log<leet_format>(cout);
     }
 
     store_to_file(tfm, outfile);

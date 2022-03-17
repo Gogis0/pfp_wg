@@ -217,7 +217,7 @@ void construct(t_index &idx, const std::string &file, sdsl::cache_config &config
     // lol it's not
 
     //create a normal fm index
-    sdsl::csa_wt<sdsl::wt_int<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;
+    sdsl::csa_wt<sdsl::wt_blcd_int<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;
     {
 
         construct(csa, file, config, width/8);
@@ -290,8 +290,9 @@ construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cach
 void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector_buffer<width> &L, uint64_t sigma) {
     // look mom, no hands!
     std::cout << "sigma: " << sigma << std::endl;
-    C = std::vector<uint64_t>(sigma, 0);
-    for (int i = 0; i < L.size(); i++) C[L[i]] += 1;
+    C = std::vector<uint64_t>(sigma+1, 0);
+    for (uint64_t i = 0; i < L.size(); i++) C[L[i]+1] += 1;
+    for (uint64_t i = 0; i < sigma; i++) C[i+1] += C[i];
 }
 
 template<class t_tfm_index_type>

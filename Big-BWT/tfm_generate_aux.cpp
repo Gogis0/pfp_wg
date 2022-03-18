@@ -95,32 +95,43 @@ int main(int argc, char **argv) {
 		cerr << "At least 2 parameters expected" << endl;
 		return 1;
 	}
-        int w = atoi(argv[5]);
-        struct Dict dict = read_dictionary(argv[1]);
+        int w = atoi(argv[1]);
+        struct Dict dict = read_dictionary(argv[2]);
 
 	//load tunneled fm index
+        char *name;
+        asprintf(&name, "%s.%s", argv[2], "tunnel");
 	tfm_index<> tfm;
-	load_from_file( tfm, argv[2] );
-        vector<vector<uint8_t>> phrase_sources(tfm.dout_rank(tfm.L.size())); // the list of ourgoing edges for each vertex
-        vector<int> phrase_occs(dict.dwords, 0);
+	load_from_file(tfm, name);
+        vector<vector<uint8_t>> phrase_outlabels(dict.dwords+1); // the list of ourgoing edges for each vertex
+        vector<vector<uint32_t>> phrase_sources(dict.dwords+1); // the list of ourgoing edges for each vertex
+        vector<vector<bool>> phrase_din(dict.dwords+1);
+        vector<vector<bool>> phrase_dout(dict.dwords+1);
 
         int node = 0;
-        uint32_t c = -1;
-	for (size_type i = 0; i < tfm.L.size()-1; i++) {
-            c = tfm.L[i];
-            phrase_occs[c]++;
-            //cout << dict.d[1] << endl;
-            if (c == 0) phrase_sources[node].push_back('$');
-            else phrase_sources[node].push_back(dict.d[dict.end[c-1]-w-1]);
+        for (int i = 0; i < tfm.L.size(); i++) {
+            phrase_sources[tfm.L[i]].push_back(node);
+            phrase_dout[tfm.L[i]] = (tfm.dout[i] == 1);
             if (tfm.dout[i+1] == 1) node++;
+        }
+
+        // circumvent the TFM and create the necessary data
+        auto p = tfm.end();
+        uint32_t c = -1, last = 0;
+	for (size_type i = 0; i < tfm.size()-1; i++) {
+            c = (uint32_t)tfm.backwardstep(p);
+            if (c == 0) phrase_outlabels[last].push_back('$');
+            else phrase_outlabels[last].push_back(dict.d[dict.end[c-1]-w-1]);
+            last = c;
 	}
-        phrase_sources[node].push_back(dict.d[dict.end[c-1]-w-1]);
-        cout << "search completed" << endl;
+        phrase_outlabels[last].push_back(dict.d[dict.end[c-1]-w-1]);
 
         // write the numbers of occurrences for each phrase
-        FILE *focc = fopen(argv[3], "wb");
+        asprintf(&name, "%s.%s", argv[2], "occ");
+        FILE *focc = fopen(name, "wb");
         for (int i = 0; i < dict.dwords; i++) {
-            size_t s = fwrite(&phrase_occs[i], sizeof(phrase_occs[i]), 1, focc);
+            uint32_t cnt = phrase_sources[i].size();
+            size_t s = fwrite(&cnt, sizeof(uint32_t), 1, focc);
             if (s != 1) {
                 cout << "Error writing to OCC file" << endl;
                 exit(1);
@@ -129,12 +140,13 @@ int main(int argc, char **argv) {
         cout << "OCC file successfully written!" << endl;
 
         // write the numbers of occurrences for each phrase
-        FILE *fsrc = fopen(argv[4], "wb");
-        for (int i = 0; i < phrase_sources.size(); i++) {
+        asprintf(&name, "%s.%s", argv[2], "out");
+        FILE *fsrc = fopen(name, "wb");
+        for (int i = 0; i < phrase_outlabels.size(); i++) {
             cout << i << " : ";
-            for (int j = 0; j < phrase_sources[i].size(); j++) {
-                cout << (char)phrase_sources[i][j] << ' ';
-                size_t s = fwrite(&phrase_sources[i], sizeof(phrase_sources[i]), 1, fsrc);
+            for (int j = 0; j < phrase_outlabels[i].size(); j++) {
+                cout << (char)phrase_outlabels[i][j] << ' ';
+                size_t s = fwrite(&phrase_outlabels[i], sizeof(phrase_outlabels[i]), 1, fsrc);
                 if (s != 1) {
                     cout << "Error writing to SOURCES file" << endl;
                     exit(1);

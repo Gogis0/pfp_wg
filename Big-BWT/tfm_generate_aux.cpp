@@ -39,9 +39,10 @@ typedef typename sdsl::int_vector<>::size_type size_type;
 
 
 struct Dict {
-    uint8_t *d = NULL;  // pointer to the dictionary
-    long dsize = 0;     // dicionary size in symbols
-    int dwords = 0;     // the number of phrases of the dicionary
+    uint8_t *d;  // pointer to the dictionary
+    long *end;   // end[i] is the index of the ending symbol of the i-th phrase
+    long dsize;  // dicionary size in symbols
+    int dwords;  // the number of phrases of the dicionary
 };
 
 void printUsage( char **argv ) {
@@ -76,11 +77,14 @@ Dict read_dictionary(char *filename) {
             if (d[i] == EndOfWord) dwords++;
         }
         cout << "Dictionary contains " << dwords << " words" << endl;
-        //retarted struct initialization, must recall a nicer way
-        Dict res;
-        res.d = d;
-        res.dsize = dsize;
-        res.dwords = dwords;
+
+        long *end= new long[dwords];
+        int cnt = 0;
+        for (int i = 0; i < dsize; i++) {
+            if (d[i] == EndOfWord) end[cnt++] = i;
+        }
+
+        Dict res = {d, end, dsize, dwords};
         return res;
 }
 
@@ -91,23 +95,27 @@ int main(int argc, char **argv) {
 		cerr << "At least 2 parameters expected" << endl;
 		return 1;
 	}
-
+        int w = atoi(argv[5]);
         struct Dict dict = read_dictionary(argv[1]);
 
 	//load tunneled fm index
 	tfm_index<> tfm;
 	load_from_file( tfm, argv[2] );
-        vector<vector<uint32_t>> phrase_sources(tfm.L.size());
+        vector<vector<uint8_t>> phrase_sources(tfm.dout_rank(tfm.L.size())); // the list of ourgoing edges for each vertex
         vector<int> phrase_occs(dict.dwords, 0);
 
-	auto p = tfm.end();
-        int last = -1;
-	for (size_type i = 1; i < tfm.size(); i++) {
-            uint c = (uint)tfm.backwardstep(p);
+        int node = 0;
+        uint32_t c = -1;
+	for (size_type i = 0; i < tfm.L.size()-1; i++) {
+            c = tfm.L[i];
             phrase_occs[c]++;
-            if (last != -1) phrase_sources[c].push_back(last);
-            last = c;
+            //cout << dict.d[1] << endl;
+            if (c == 0) phrase_sources[node].push_back('$');
+            else phrase_sources[node].push_back(dict.d[dict.end[c-1]-w-1]);
+            if (tfm.dout[i+1] == 1) node++;
 	}
+        phrase_sources[node].push_back(dict.d[dict.end[c-1]-w-1]);
+        cout << "search completed" << endl;
 
         // write the numbers of occurrences for each phrase
         FILE *focc = fopen(argv[3], "wb");
@@ -119,6 +127,22 @@ int main(int argc, char **argv) {
             }
         }
         cout << "OCC file successfully written!" << endl;
+
+        // write the numbers of occurrences for each phrase
+        FILE *fsrc = fopen(argv[4], "wb");
+        for (int i = 0; i < phrase_sources.size(); i++) {
+            cout << i << " : ";
+            for (int j = 0; j < phrase_sources[i].size(); j++) {
+                cout << (char)phrase_sources[i][j] << ' ';
+                size_t s = fwrite(&phrase_sources[i], sizeof(phrase_sources[i]), 1, fsrc);
+                if (s != 1) {
+                    cout << "Error writing to SOURCES file" << endl;
+                    exit(1);
+                }
+            }
+            cout << endl;
+        }
+        cout << "SOURCES file successfully written!" << endl;
 
         delete dict.d;
 }

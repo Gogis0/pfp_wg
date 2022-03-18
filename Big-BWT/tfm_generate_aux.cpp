@@ -114,6 +114,13 @@ int main(int argc, char **argv) {
             phrase_dout[tfm.L[i]] = (tfm.dout[i] == 1);
             if (tfm.dout[i+1] == 1) node++;
         }
+        vector<map<uint32_t, uint32_t>> H(dict.dwords+1);
+        // remap phrase_sources so that 
+        for (int i = 0; i < dict.dwords; i++) {
+            for (int j = 0; j < phrase_sources[i]; j++) {
+                H[i][phrase_sources[j]] = j;
+            }
+        }
 
         // circumvent the TFM and create the necessary data
         auto p = tfm.end();

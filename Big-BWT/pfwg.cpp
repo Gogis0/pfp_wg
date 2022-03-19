@@ -44,7 +44,6 @@ struct Args {
     string occExt =    EXTOCC;      // extension occurrences file  
     string dictExt =   EXTDICT;     // extension dictionary file  
     string lastExt =   EXTLST;      // extension file containing last chars   
-    string saExt =     EXTSAI;      // extension file containing sa info   
     int w = 10;            // sliding window size and its default 
 };
 
@@ -64,14 +63,14 @@ struct SeqId {
 
     // constructor
     SeqId(uint32_t i, int r, uint32_t *b, int8_t c) : id(i), remaining(r), bwtpos(b) {
-    char2write = c;
+        char2write = c;
     }
 
     // advance to the next bwt position, return false if there are no more positions 
     bool next() {
-    remaining--;
-    bwtpos += 1;
-    return remaining>0;
+        remaining--;
+        bwtpos += 1;
+        return remaining>0;
     }
     bool operator<(const SeqId& a);
 };
@@ -100,19 +99,16 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
 
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
-    for (int i = 0;i < dwords-1;i++) assert(eos[i] < eos[i+1]);
+    for (int i = 0; i < dwords-1;i++) assert(eos[i] < eos[i+1]);
 
     // open output file
     FILE *fbwt = open_aux_file(arg.basename,"bwt","wb");
 
     // main loop: consider each entry in the SA of dict
     time_t start = time(NULL);
-    long full_words = 0; 
-    long easy_bwts = 0;
-    long hard_bwts = 0;
-    long next;
+    long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
     uint32_t seqid;
-    for(long i=dwords+arg.w+1; i < dsize; i=next ) {
+    for(long i=dwords+arg.w+1; i < dsize; i = next) {
         // we are considering d[sa[i]....]
         next = i+1;  // prepare for next iteration  
         // compute length of this suffix and sequence it belongs
@@ -133,7 +129,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
         } else {
         // ----- hard case: there can be a group of equal suffixes starting at i
         // save seqid and the corresponding char 
-        vector<uint32_t> id2merge(1,seqid); 
+        vector<uint32_t> id2merge(1, seqid); 
         vector<uint8_t> char2write(1,d[sa[i]-1]);
         while(next < dsize && lcp[next] >= suffixLen) {
             assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
@@ -165,12 +161,7 @@ void print_help(char** argv, Args &args) {
   cout << "Usage: " << argv[ 0 ] << " <input filename> [options]" << endl;
   cout << "  Options: " << endl
         << "\t-w W\tsliding window size, def. " << args.w << endl
-        #ifndef NOTHREADS
-        << "\t-t M\tnumber of helper threads, def. none " << endl
-        #endif
-        << "\t-h  \tshow help and exit" << endl
-        << "\t-s  \tcompute sampled suffix array" << endl
-        << "\t-S  \tcompute full suffix array" << endl;
+        << "\t-h  \tshow help and exit" << endl;
   exit(1);
 }
 
@@ -385,39 +376,41 @@ static void compute_dict_bwt_lcp(uint8_t *d, long dsize,long dwords, int w,
 static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t> &char2write, 
                                     uint32_t *ilist, uint32_t *istart,
                                     FILE *fbwt, long &easy_bwts, long &hard_bwts) {
-  size_t numwords = id2merge.size(); // numwords dictionary words contain the same suffix
-  bool samechar=true;
-  for(size_t i=1;(i<numwords)&&samechar;i++)
-    samechar = (char2write[i-1]==char2write[i]); 
-  if(samechar) {
-    for(size_t i=0; i<numwords; i++) {
-      uint32_t s = id2merge[i];
-      for(long j=istart[s];j<istart[s+1];j++)
-        if(fputc(char2write[0],fbwt)==EOF) die("BWT write error 1");
-      easy_bwts +=  istart[s+1]- istart[s]; 
+    size_t numwords = id2merge.size(); // numwords dictionary words contain the same suffix
+    bool samechar=true;
+    for(size_t i=1; (i < numwords) && samechar; i++) {
+        samechar = (char2write[i-1]==char2write[i]);
     }
-  }
-  else {  // many words, many chars...     
-    vector<SeqId> heap; // create heap
-    for(size_t i=0; i<numwords; i++) {
-      uint32_t s = id2merge[i];
-      heap.push_back(SeqId(s,istart[s+1]-istart[s], ilist+istart[s], char2write[i]));
+
+    if(samechar) {
+        for(size_t i=0; i<numwords; i++) {
+            uint32_t s = id2merge[i];
+            for(long j=istart[s];j<istart[s+1];j++) {
+                if(fputc(char2write[0],fbwt)==EOF) die("BWT write error 1");
+            }
+            easy_bwts +=  istart[s+1]- istart[s]; 
+        }
+    } else {  // many words, many chars...     
+        vector<SeqId> heap; // create heap
+        for(size_t i=0; i<numwords; i++) {
+            uint32_t s = id2merge[i];
+            heap.push_back(SeqId(s,istart[s+1]-istart[s], ilist+istart[s], char2write[i]));
+        }
+        std::make_heap(heap.begin(),heap.end());
+        while(heap.size()>0) {
+            // output char for the top of the heap
+            SeqId s = heap.front();
+            if(fputc(s.char2write,fbwt)==EOF) die("BWT write error 2");
+            hard_bwts += 1;
+            // remove top 
+            pop_heap(heap.begin(),heap.end());
+            heap.pop_back();
+            // if remaining positions, reinsert to heap
+            if(s.next()) {
+                heap.push_back(s);
+                push_heap(heap.begin(),heap.end());
+            }
+        }
     }
-    std::make_heap(heap.begin(),heap.end());
-    while(heap.size()>0) {
-      // output char for the top of the heap
-      SeqId s = heap.front();
-      if(fputc(s.char2write,fbwt)==EOF) die("BWT write error 2");
-      hard_bwts += 1;
-      // remove top 
-      pop_heap(heap.begin(),heap.end());
-      heap.pop_back();
-      // if remaining positions, reinsert to heap
-      if(s.next()) {
-        heap.push_back(s);
-        push_heap(heap.begin(),heap.end());
-      }
-    }
-  }
 }
 

@@ -28,6 +28,8 @@
 #include <random>
 #include <vector>
 #include <map>
+#include <sdsl/int_vector.hpp>
+#include <sdsl/util.hpp>
 extern "C" {
 #include "gsa/gsacak.h"
 #include "utils.h"
@@ -35,6 +37,7 @@ extern "C" {
 
 using namespace std;
 using namespace __gnu_cxx;
+using namespace sdsl;
 
 // -------------------------------------------------------------
 // struct containing command line parameters and other globals
@@ -79,7 +82,6 @@ bool SeqId::operator<(const SeqId& a) {
     return *bwtpos > *(a.bwtpos);
 }
 
-
 /* *******************************************************************
  * Computation of the final BWT
  * 
@@ -88,8 +90,11 @@ bool SeqId::operator<(const SeqId& a) {
  * ilist[k] contains the ordered positions in BWT(P) containing word i 
  * ******************************************************************* */
 void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size  
-         uint32_t *ilist, uint8_t *last, long psize, // ilist, last and their size 
+         uint32_t *ilist, int_vector<> &L, int_vector<> &dout, long psize, // ilist, last and their size 
          uint32_t *istart, long dwords) { // starting point in ilist for each word and # words
+
+    
+    util::init_support(select_support_mcl<1, 1>, dout);
     // compute SA and BWT of D and do some checking on them 
     uint_t *sa; int_t *lcp;
     compute_dict_bwt_lcp(d, dsize, dwords, arg.w, &sa, &lcp);
@@ -102,7 +107,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
     for (int i = 0; i < dwords-1;i++) assert(eos[i] < eos[i+1]);
 
     // open output file
-    FILE *fbwt = open_aux_file(arg.basename,"bwt","wb");
+    FILE *fbwt = open_aux_file(arg.basename,"L","wb");
 
     // main loop: consider each entry in the SA of dict
     time_t start = time(NULL);
@@ -113,6 +118,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
         next = i+1;  // prepare for next iteration  
         // compute length of this suffix and sequence it belongs
         int_t suffixLen = getlen(sa[i], eos, dwords, &seqid);
+        cout << suffixLen << " " << seqid << endl;
         // ignore suffixes of lenght <= w
         if(suffixLen <= arg.w) continue;
         // ----- simple case: the suffix is a full word 
@@ -133,7 +139,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, // dictionary and its size
         vector<uint8_t> char2write(1,d[sa[i]-1]);
         while(next < dsize && lcp[next] >= suffixLen) {
             assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
-            assert(sa[next]>0 && d[sa[next]-1]!=EndOfWord); // sa[next] cannot be a full word
+            assert(sa[next]>0 && d[sa[next]-1] != EndOfWord); // sa[next] cannot be a full word
             int_t nextsuffixLen = getlen(sa[next],eos,dwords,&seqid);
             assert(nextsuffixLen>=suffixLen);
             if(nextsuffixLen==suffixLen) {
@@ -197,8 +203,8 @@ void parseArgs( int argc, char** argv, Args& arg ) {
         cout << "Invalid number of arguments" << endl;
         print_help(argv,arg);
     }
-    if(arg.w <4) {
-        cout << "Windows size must be at least 4\n";
+    if(arg.w <2) {
+        cout << "Windows size must be at least 2\n";
         exit(1);
     }
 }
@@ -260,15 +266,22 @@ int main(int argc, char** argv) {
     e = fread(ilist,4,psize,g);
     if(e!=psize) die("fread 3");
     fclose(g);
-    assert(ilist[0]==1); // EOF is in PBWT[1] 
 
-    // read bwlast file 
-    g = open_aux_file(arg.basename,EXTBWLST,"rb");  
-    cout  << "bwlast file size: " << psize << endl;
-    uint8_t *bwlast = new uint8_t[psize];  
-    e = fread(bwlast,1,psize,g);
-    if(e!=psize) die("fread 4");
-    fclose(g);
+    // read the L, din and dout files
+    char *name;
+    int_vector<> L, din, dout;
+    asprintf(&name, "%s.%s", arg.basename, "last");
+    load_from_file(L, name);
+    asprintf(&name, "%s.%s", arg.basename, "din");
+    load_from_file(din, name);
+    asprintf(&name, "%s.%s", arg.basename, "dout");
+    load_from_file(dout, name);
+    cout  << L << endl;
+    cout  << din << endl;
+    cout  << dout << endl;
+
+    uint8_t *bwlast = new uint8_t[L.size()];  
+    for (int i = 0; i < L.size(); i++) bwlast[i] = L[i];
 
     // convert occ entries into starting positions inside ilist
     // ilist also contains the position of EOF but we don't care about it since it is not in dict 
@@ -278,12 +291,9 @@ int main(int argc, char** argv) {
         occ[i] = last;
         last += tmp;
     }
-    assert(last==psize);
-    occ[dwords]=psize;
-    // extra check: the smallest dictionary word is d0 =$.... that occurs once
-    assert(occ[1]==occ[0]+1);
+    occ[dwords]=L.size();
 
-    bwt(arg,d,dsize,ilist,bwlast,psize,occ,dwords); // version not using threads
+    bwt(arg,d,dsize,ilist,L,dout,psize,occ,dwords); // version not using threads
     delete[] bwlast;
     delete[] ilist;
     delete[] occ;

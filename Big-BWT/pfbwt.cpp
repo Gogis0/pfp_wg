@@ -299,8 +299,8 @@ void parseArgs( int argc, char** argv, Args& arg ) {
      cout << "You can either require the sampled SA or the full SA, not both";
      exit(1);
    } 
-   if(arg.w <4) {
-     cout << "Windows size must be at least 4\n";
+   if(arg.w <2) {
+     cout << "Windows size must be at least 2\n";
      exit(1);
    }
    #ifdef NOTHREADS

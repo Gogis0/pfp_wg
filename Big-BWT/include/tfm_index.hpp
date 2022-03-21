@@ -235,7 +235,9 @@ void construct(t_index &idx, const std::string &file, sdsl::cache_config &config
 //! function returns the result of the dbg_algorithms::find_min_dbg - function
 template<class t_tfm_index_type, class t_csa_wt_type>
 std::pair<typename t_tfm_index_type::size_type, typename t_tfm_index_type::size_type>
-construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cache_config &config) {
+construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa_old, sdsl::cache_config &config) {
+
+    sdsl::csa_wt<sdsl::wt_blcd_int<>, 0xFFFFFFFF, 0xFFFFFFFF> csa;
     typedef typename t_tfm_index_type::size_type size_type;
     std::pair<size_type, size_type> dbg_res;
 
@@ -304,6 +306,8 @@ void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::i
     //construct tfm index from L, din and dout
     typedef typename t_tfm_index_type::wt_type wt_type;
     typedef typename t_tfm_index_type::bit_vector_type bv_type;
+
+    //maybe a dirty hack, but I need to get rid of the '0' (dollar) symbol somehow, cause I already have one
 
     //wavelet tree of L
     tfm_index.m_L = wt_type(L_buf, L_buf.size());

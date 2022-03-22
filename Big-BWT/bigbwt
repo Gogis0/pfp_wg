@@ -35,6 +35,7 @@ shasum_exe      =  "sha256sum"
 # tunneling commands
 parsetunneling  =  os.path.join(dir_bigbwt, "tfm_index_construct.x")
 tunnelinginvert = os.path.join(dir_bigbwt, "tfm_index_invert.x")
+pfwg_exe = os.path.join(dir_bigbwt, "pfwg.x")
 
 
 
@@ -117,7 +118,6 @@ def main():
     if(execute_command(command,logfile,logfile_name)!=True):
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start));      
-    exit()
 
     # ----------- computation of the BWT of the parsing
     start = time.time()
@@ -143,33 +143,19 @@ def main():
     # ----------- compute final BWT using dictionary and BWT of parse    
     start = time.time()     
     if(os.path.getsize(args.input+".dict") >=  (2**31-4) ):
-      # 64 bit version with and without threads
-      if args.t>0 and args.s==False and args.e==False:
-        command = "{exe} -w {wsize} {file} -t {th}".format(
-              exe = os.path.join(args.bigbwt_dir,pfbwt_exe64),
-              wsize=args.wsize, file=args.input, th=args.t)
-      else:
-        command = "{exe} -w {wsize} {file}".format( 
-                exe = os.path.join(args.bigbwt_dir,pfbwtNT_exe64),
-                wsize=args.wsize, file=args.input)        
+        print("The 64-bit version not yet supported, sorry!")
+        exit() 
     else:  # 32 bit version
-      if args.t>0 and args.s==False and args.e==False:
-        command = "{exe} -w {wsize} {file} -t {th}".format(
-                exe = os.path.join(args.bigbwt_dir,pfbwt_exe),
-                wsize=args.wsize, file=args.input, th=args.t)
-      else:
         command = "{exe} -w {wsize} {file}".format(
-                exe = os.path.join(args.bigbwt_dir,pfbwtNT_exe),
+                exe = os.path.join(args.bigbwt_dir,pfwg_exe),
                 wsize=args.wsize, file=args.input)
-    if args.s: command += " -s"
-    if args.e: command += " -e"
-    if args.S: command += " -S"
     
-    print("==== Computing final BWT. Command:", command)
+    print("==== Computing final tunneled WG. Command:", command)
     if(execute_command(command,logfile,logfile_name)!=True):
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start))      
     print("Total construction time: {0:.4f}".format(time.time()-start0))      
+    exit()
 
     # ---- compute sha256sum
     if args.sum:

@@ -88,23 +88,10 @@ inline uint8_t get_prev(int w, uint8_t *d, uint64_t *end, uint32_t seqid) {
     return (seqid == 0) ? '$' : d[end[seqid-1]-w-1];
 }
 
-void write_din(FILE *fdin, bool bit) {
-    static short cnt = 0;
-    static uint8_t buffer = 0;
-    buffer |= (bit << cnt++);
+void write_bitvector(FILE *f, bool bit, uint8_t &cnt, uint8_t &buffer) {
+    buffer |= (bit << (7 - cnt++));
     if (cnt == 8) {
-        if(fputc(buffer,fdin)==EOF) die("Din write error 0");
-        cnt = 0;
-        buffer = 0;
-    }
-}
-
-void write_dout(FILE *fdout, bool bit) {
-    static short cnt = 0;
-    static uint8_t buffer = 0;
-    buffer |= (bit << cnt++);
-    if (cnt == 8) {
-        if(fputc(buffer,fdout)==EOF) die("Dout write error 0");
+        if(fputc(buffer,f) == EOF) die("Din/Dout write error 0");
         cnt = 0;
         buffer = 0;
     }
@@ -128,7 +115,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
 
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
-    for (int i = 0; i < dwords-1;i++) assert(eos[i] < eos[i+1]);
+    for (int i = 0; i < dwords-1; i++) assert(eos[i] < eos[i+1]);
 
     // open output file
     FILE *fbwt = open_aux_file(arg.basename,"L","wb");
@@ -209,6 +196,7 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     time_t start = time(NULL);
     long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
     uint32_t seqid;
+    uint8_t cnt = 0, buffer = 0;
     for(long i=dwords+arg.w+1; i < dsize; i = next) {
         // we are considering d[sa[i]....]
         next = i+1;  // prepare for next iteration  
@@ -224,13 +212,14 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
             assert(tfmp.din[start] == 1);
             uint32_t r = tfmp.din_rank(start+1);
             for (int j = start; j < end; j++) {
-                write_din(fdin, tfmp.din[j]);
+                write_bitvector(fdin, tfmp.din[j], cnt, buffer);
             }
             continue; // proceed with next i 
         } else {
-            write_din(fdin, 1);
+            write_bitvector(fdin, 1, cnt, buffer);
         }
     }
+    if(fputc(buffer,fdin)==EOF) die("Din write error 0"); // write the leftover bits
     fclose(fdin);
 }
 
@@ -251,6 +240,7 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
     time_t start = time(NULL);
     long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
     uint32_t seqid;
+    uint8_t cnt = 0, buffer = 0;
     for(long i=dwords+arg.w+1; i < dsize; i = next) {
         // we are considering d[sa[i]....]
         next = i+1;  // prepare for next iteration  
@@ -269,7 +259,7 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
                 if (tfmp.din[j] == 1) {
                     uint32_t pos = tfmp.dout_select(tfmp.din_rank(j+1));
                     while (1) {
-                        write_dout(fdout, tfmp.dout[pos]);
+                        write_bitvector(fdout, tfmp.dout[pos], cnt, buffer);
                         if (tfmp.dout[++pos] == 1) break;
                     }
                 }
@@ -290,9 +280,10 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
                 }
                 else break;
             }
-            for (int k = 0; k < bits_to_write; k++) write_dout(fdout, 1);
+            for (int k = 0; k < bits_to_write; k++) write_bitvector(fdout, 1, cnt, buffer);
         }
     }
+    if(fputc(buffer,fdout)==EOF) die("Dout write error 0"); // write the leftover bits
     fclose(fdout);
 }
 
@@ -531,7 +522,7 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
             for(long j = tfmp.C[s]; j < tfmp.C[s+1]; j++) {
                 if(fputc(char2write[0],fbwt) == EOF) die("L write error 1");
             }
-            cout << s << " " << tfmp.C[s+1] - tfmp.C[s] << endl;
+            //cout << s << " " << tfmp.C[s+1] - tfmp.C[s] << endl;
             easy_bwts +=  tfmp.C[s+1] - tfmp.C[s]; 
         }
     } else {  // many words, many chars...     

@@ -111,7 +111,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     
     // set d[0]==0 as this is the EOF char in the final BWT
     assert(d[0]==Dollar);
-    d[0] = '0';
+    d[0] = 0;
 
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;

@@ -43,7 +43,7 @@ void printUsage( char **argv ) {
 
 int main(int argc, char **argv) {
 	//check parameters
-	if (argc != 3) {
+	if (argc < 2) {
 		printUsage( argv );
 		cerr << "At least 1 parameter expected" << endl;
 		return 1;
@@ -60,13 +60,17 @@ int main(int argc, char **argv) {
             S[tfm.size() - i - 1] = c;
             //cout << "\t pos:" << p.first << " c: " << c << endl;
 	}
+        /*
         cout << "\t";
 	for (size_type i = 0; i < tfm.size(); i++) {
             cout << S[i];
         }
         cout << endl;
+        */
         
-        FILE *fout = fopen(argv[2], "w");
-        fwrite(S, sizeof(char), tfm.size()-1, fout);
+        char *name;
+        asprintf(&name, "%s.%s", argv[1], "untunneled");
+        FILE *fout = fopen(name, "w");
+        fwrite(S, sizeof(char), tfm.size(), fout);
         fclose(fout);
 }

@@ -17,6 +17,7 @@ DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_b
 TRIEEXECUTABLES = create_trie_input.x  mp_search.x
 
 TEST_INPUTS := data/yeast.raw data/yeast.fasta
+INVERT_TESTS := test/inv.00 test/inv.01 test/inv.02 test/inv.03 test/inv.04
 
 # targets not producing a file declared phony
 .PHONY: all clean tarfile autotest
@@ -128,11 +129,14 @@ mp_search.x: mp_search.cpp include/tries.hpp include/trie_xbwt.hpp include/trie_
 	-I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib mp_search.cpp -o mp_search.x $(LIBS)
 
 
-autotest: $(TEST_INPUTS)
-	echo "\033[0;32mAll tests passed!\033[0m"
+autotest: $(INVERT_TESTS)
+	@echo "\033[0;32mAll tests passed!\033[0m"
 
 $(TEST_INPUTS): tfm_index_invert.x $(EXECS) $(EXECS_NT)
 	./bigbwt $@
-	./tfm_index_invert.x $@.tunnel $@.untunneled
+	./tfm_index_invert.x $@.tunnel
 	diff $@.parse $@.untunneled
 
+$(INVERT_TESTS): tfm_index_invert.x
+	./tfm_index_invert.x $@
+	diff $@ $@.untunneled

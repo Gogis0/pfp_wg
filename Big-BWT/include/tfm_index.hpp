@@ -158,8 +158,8 @@ public:
         auto c = is.second;
         i = C[c] + is.first;
         //std::cout << L << std::endl;
-        std::cout <<  "\t C[c]: " << C[c] << "   rank(L[i], i): " << is.first << " going to " << i << std::endl;
 
+        //std::cout << "C: " << (char)c <<  "\t C[c]: " << C[c] << "\trank(" << (char)is.second << "," << i << ") =" << is.first  << std::endl;
         //check for the start of a tunnel
         auto din_rank_ip1 = din_rank(i + 1);
         if (din[i] == 0) {
@@ -306,19 +306,19 @@ construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cach
 
 
 void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector_buffer<> &L, uint64_t sigma) {
-    // look mom, no hands!
-    std::cout << "sigma: " << sigma << std::endl;
+    //std::cout << "sigma: " << sigma << std::endl;
     C = std::vector<uint64_t>(sigma+1, 0);
     for (uint64_t i = 0; i < L.size(); i++) C[L[i]+1] += 1;
     for (uint64_t i = 0; i < sigma; i++) C[i+1] += C[i];
 }
 
 void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector<8> &L, uint64_t sigma) {
-    // look mom, no hands!
-    std::cout << "sigma: " << sigma << std::endl;
+    //std::cout << "sigma: " << sigma << std::endl;
     C = std::vector<uint64_t>(500, 0); // lol I hope it's enought :D
     for (uint64_t i = 0; i < L.size(); i++) C[L[i]+1] += 1;
-    for (uint64_t i = 0; i < C.size()-1; i++) C[i+1] += C[i];
+    for (uint64_t i = 0; i < C.size()-1; i++) {
+        C[i+1] += C[i];
+    }
 }
 
 template<class t_tfm_index_type>
@@ -367,29 +367,27 @@ void load_bitvector(sdsl::int_vector<1> &B, const std::string filename, const ui
 
 template<class t_tfm_index_type>
 void construct_from_pfwg(t_tfm_index_type &tfm_index, const std::string basename) {
-    //set original string size
+    //find original string size
+    sdsl::int_vector<8> original;
+    load_vector_from_file(original, basename,  1);
+
     sdsl::int_vector<8> L;
     load_vector_from_file(L, basename + ".L", 1);
-    std::cout << L << std::endl;
     uint64_t size = L.size();
     sdsl::int_vector<1> din, dout;
-    din.resize(size+1);
-    dout.resize(size+1);
-    load_bitvector(din, basename + ".din", size+1); // one additional bit at the end
-    load_bitvector(dout, basename + ".dout", size+1);
-
-    std::cout << din << std::endl;
+    din.resize(size+2);
+    dout.resize(size+2);
+    load_bitvector(din, basename + ".din", size+2); // one additional bit at the end
+    load_bitvector(dout, basename + ".dout", size+2);
 
     typedef ::tfm_index<>::wt_type wt_type;
     typedef ::tfm_index<>::bit_vector_type bv_type;
 
-    tfm_index.text_len = size;
+    tfm_index.text_len = original.size();
     sdsl::int_vector_buffer<8> buf (basename + ".L", std::ios::in, size, 8, true);
     tfm_index.m_L = wt_type(buf, size);
-    std::cout <<  "\t L: " << tfm_index.m_L << std::endl;
 
     symbol_frequencies(tfm_index.m_C, L, tfm_index.m_L.sigma);
-    std::cout << tfm_index.m_C << std::endl;
     tfm_index.m_dout = bv_type(std::move(dout));
     sdsl::util::init_support(tfm_index.m_dout_rank, &tfm_index.m_dout);
     sdsl::util::init_support(tfm_index.m_dout_select, &tfm_index.m_dout);
@@ -398,8 +396,18 @@ void construct_from_pfwg(t_tfm_index_type &tfm_index, const std::string basename
     sdsl::util::init_support(tfm_index.m_din_rank, &tfm_index.m_din);
     sdsl::util::init_support(tfm_index.m_din_select, &tfm_index.m_din);
 
+/*
+    std::cout << L << std::endl;
     std::cout << tfm_index.m_din << std::endl;
     std::cout << tfm_index.m_dout << std::endl;
+    std::cout << tfm_index.m_C << std::endl;
+    std::cout <<  "\t L: " << tfm_index.m_L << std::endl;
+    for (int i = 0; i < size; i++) {
+        std::cout << "inverse_select(" << i << ") = " << tfm_index.m_L.inverse_select(i).first << "\t";
+        std::cout << "C[c] = " << tfm_index.C[tfm_index.m_L[i]] << std::endl;
+    }
+*/
+
 }
 
 #endif

@@ -51,19 +51,22 @@ int main(int argc, char **argv) {
 	
 	//load tunneled fm index
 	tfm_index<> tfm;
-	load_from_file( tfm, argv[1] );
+        construct_from_pfwg(tfm, argv[1]);
 
-	uint32_t *S = new uint32_t[tfm.size()];
-	S[tfm.size()-1] = 0;
+	char *S = new char[tfm.size()];
 	auto p = tfm.end();
-	for (size_type i = 1; i < tfm.size(); i++) {
-            S[tfm.size() - i - 1] = (uint32_t)tfm.backwardstep( p );
-	}
 	for (size_type i = 0; i < tfm.size(); i++) {
-            cout << S[i] << " ";
+            char c = (char)tfm.backwardstep( p );
+            S[tfm.size() - i - 1] = c;
+            //cout << "\t pos:" << p.first << " c: " << c << endl;
+	}
+        cout << "\t";
+	for (size_type i = 0; i < tfm.size(); i++) {
+            cout << S[i];
         }
         cout << endl;
         
         FILE *fout = fopen(argv[2], "w");
-        fwrite(S, sizeof(uint32_t), tfm.size()-1, fout);
+        fwrite(S, sizeof(char), tfm.size()-1, fout);
+        fclose(fout);
 }

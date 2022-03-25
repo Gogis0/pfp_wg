@@ -85,12 +85,12 @@ bool SeqId::operator<(const SeqId& a) {
 
 
 inline uint8_t get_prev(int w, uint8_t *d, uint64_t *end, uint32_t seqid) {
-    return (seqid == 0) ? '$' : d[end[seqid-1]-w-1];
+    return d[end[seqid]-w-1];
 }
 
-void write_bitvector(FILE *f, bool bit, uint8_t &cnt, uint8_t &buffer) {
+void write_bitvector(FILE *f, bool bit, uint8_t &cnt, uint8_t &buffer, bool hard_write=false) {
     buffer |= (bit << (7 - cnt++));
-    if (cnt == 8) {
+    if (hard_write || (cnt == 8)) {
         if(fputc(buffer,f) == EOF) die("Din/Dout write error 0");
         cnt = 0;
         buffer = 0;
@@ -111,7 +111,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     
     // set d[0]==0 as this is the EOF char in the final BWT
     assert(d[0]==Dollar);
-    d[0] = 0;
+    d[0] = '0';
 
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
@@ -183,8 +183,6 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
          uint32_t *ilist, tfm_index<> &tfmp,long psize, // ilist, last and their size 
          uint32_t *istart, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
-    assert(d[0]==0);
-
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
     for (int i = 0; i < dwords-1;i++) assert(eos[i] < eos[i+1]);
@@ -216,10 +214,24 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
             }
             continue; // proceed with next i 
         } else {
-            write_bitvector(fdin, 1, cnt, buffer);
+            // ----- hard case: there can be a group of equal suffixes starting at i
+            // save seqid and the corresponding char 
+            int bits_to_write = tfmp.C[seqid+1] - tfmp.C[seqid];
+            while(next < dsize && lcp[next] >= suffixLen) {
+                assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
+                assert(sa[next]>0 && d[sa[next]-1] != EndOfWord); // sa[next] cannot be a full word
+                int_t nextsuffixLen = getlen(sa[next],eos,dwords,&seqid);
+                assert(nextsuffixLen>=suffixLen);
+                if(nextsuffixLen==suffixLen) {
+                    bits_to_write += tfmp.C[seqid+1] - tfmp.C[seqid];
+                    next++;
+                }
+                else break;
+            }
+            for (int k = 0; k < bits_to_write; k++) write_bitvector(fdin, 1, cnt, buffer);
         }
     }
-    if(fputc(buffer,fdin)==EOF) die("Din write error 0"); // write the leftover bits
+    write_bitvector(fdin, 1, cnt, buffer, true);
     fclose(fdin);
 }
 
@@ -227,8 +239,6 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
          uint32_t *ilist, tfm_index<> &tfmp,long psize, // ilist, last and their size 
          uint32_t *istart, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
-    assert(d[0]==0);
-
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
     for (int i = 0; i < dwords-1;i++) assert(eos[i] < eos[i+1]);
@@ -268,14 +278,14 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
         } else {
             // ----- hard case: there can be a group of equal suffixes starting at i
             // save seqid and the corresponding char 
-            int bits_to_write = 0;
+            int bits_to_write = tfmp.C[seqid+1] - tfmp.C[seqid];
             while(next < dsize && lcp[next] >= suffixLen) {
                 assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
                 assert(sa[next]>0 && d[sa[next]-1] != EndOfWord); // sa[next] cannot be a full word
                 int_t nextsuffixLen = getlen(sa[next],eos,dwords,&seqid);
                 assert(nextsuffixLen>=suffixLen);
                 if(nextsuffixLen==suffixLen) {
-                    bits_to_write++;
+                    bits_to_write += tfmp.C[seqid+1] - tfmp.C[seqid];
                     next++;
                 }
                 else break;
@@ -283,7 +293,7 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
             for (int k = 0; k < bits_to_write; k++) write_bitvector(fdout, 1, cnt, buffer);
         }
     }
-    if(fputc(buffer,fdout)==EOF) die("Dout write error 0"); // write the leftover bits
+    write_bitvector(fdout, 1, cnt, buffer, true);
     fclose(fdout);
 }
 
@@ -410,6 +420,7 @@ int main(int argc, char** argv) {
         uint32_t tmp = occ[i];
         occ[i] = last;
         last += tmp;
+        //cout << i << " = " << occ[i] << " " << tfmp.C[i+1] - tfmp.C[i] << endl; 
     }
     occ[dwords]=tfmp.L.size();
 

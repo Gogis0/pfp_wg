@@ -130,6 +130,7 @@ int_vector<> load_parse(const string &infile) {
     uint32_t tmp, max = 0, min = (1 << 31) - 1;
     for (int i = 0; i < n; i++) {
         fread(&tmp, sizeof(uint32_t), 1, parse);
+        tmp--; // the lowest phrase ID is 1
         v[i] = tmp;
         if (tmp > max) max = tmp;
         if (tmp < min) min = tmp;

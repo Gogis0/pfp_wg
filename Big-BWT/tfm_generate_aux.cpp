@@ -69,7 +69,7 @@ void write_occs(char *basename, Dict dict, vector<vector<uint32_t>> &sources) {
     char *name;
     asprintf(&name, "%s.%s", basename, "occ");
     FILE *focc = fopen(name, "wb");
-    for (int i = 0; i < dict.dwords; i++) {
+    for (int i = 0; i < sources.size(); i++) {
         uint32_t cnt = sources[i].size();
         size_t s = fwrite(&cnt, sizeof(uint32_t), 1, focc);
         if (s != 1) {
@@ -85,7 +85,7 @@ void write_ilist(char *basename, Dict dict, vector<vector<uint32_t>> &sources) {
     char *name;
     asprintf(&name, "%s.%s", basename, "ilist");
     FILE *filist = fopen(name, "wb");
-    for (int i = 0; i < dict.dwords; i++) {
+    for (int i = 0; i < sources.size(); i++) {
         for (int j = 0; j < (int)sources[i].size(); j++) {
             size_t s = fwrite(&sources[i][j], sizeof(uint32_t), 1, filist);
             if (s != 1) {
@@ -114,8 +114,8 @@ int main(int argc, char **argv) {
         load_from_file(tfm, name);
         cout << "TFM loaded" << endl;
 
-        vector<vector<uint32_t>> phrase_sources(dict.dwords+1); // the list of ourgoing edges for each vertex
-        vector<vector<uint32_t>> phrase_destinations(dict.dwords+1); // the list of ourgoing edges for each vertex
+        vector<vector<uint32_t>> phrase_sources(dict.dwords); // the list of ourgoing edges for each vertex
+        vector<vector<uint32_t>> phrase_destinations(dict.dwords); // the list of ourgoing edges for each vertex
 
         for (int i = 0; i < tfm.L.size(); i++) {
             uint32_t act_char = tfm.L[i];

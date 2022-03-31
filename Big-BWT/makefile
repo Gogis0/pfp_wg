@@ -17,7 +17,7 @@ DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_b
 TRIEEXECUTABLES = create_trie_input.x  mp_search.x
 
 TEST_INPUTS := data/yeast.raw data/yeast.fasta
-INVERT_TESTS := test/inv.00 test/inv.01 test/inv.02 test/inv.03 test/inv.04
+INVERT_TESTS := test/inv.00 test/inv.01 test/inv.02 test/inv.03 test/inv.04 test/inv.05
 
 # targets not producing a file declared phony
 .PHONY: all clean tarfile autotest

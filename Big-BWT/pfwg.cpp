@@ -135,15 +135,17 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
         // ----- simple case: the suffix is a full word 
         if(sa[i] == 0 || d[sa[i]-1] == EndOfWord) {
             full_words++;
-            uint32_t start = tfmp.C[seqid], end = tfmp.C[seqid+1];
+            uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
             for (int j = start; j < end; j++) {
                 if (tfmp.din[j] == 1) {
                     uint32_t pos = tfmp.dout_select(tfmp.din_rank(j+1));
                     while (1) {
-                        uint32_t act_phrase = tfmp.L[pos];
+                        if (tfmp.L[pos] == 0) pos = 0;
+                        uint32_t act_phrase = tfmp.L[pos] - 1;
                         uint8_t char_to_write = get_prev(arg.w, d, end_to_phrase, act_phrase);
                         easy_bwts++;
+                        //cout << easy_bwts + hard_bwts << " " << seqid << " " << char_to_write << endl;
                         if(fputc(char_to_write,fbwt)==EOF) die("L write error 0");
                         if (tfmp.dout[++pos] == 1) break;
                     }
@@ -191,7 +193,6 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     FILE *fdin = open_aux_file(arg.basename,"din","wb");
 
     // main loop: consider each entry in the SA of dict
-    time_t start = time(NULL);
     long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
     uint32_t seqid;
     uint8_t cnt = 0, buffer = 0;
@@ -206,9 +207,8 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
         // ----- simple case: the suffix is a full word 
         if(sa[i] == 0 || d[sa[i]-1] == EndOfWord) {
             full_words++;
-            uint32_t start = tfmp.C[seqid], end = tfmp.C[seqid+1];
+            uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
-            uint32_t r = tfmp.din_rank(start+1);
             for (int j = start; j < end; j++) {
                 write_bitvector(fdin, tfmp.din[j], cnt, buffer);
             }
@@ -216,14 +216,14 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
         } else {
             // ----- hard case: there can be a group of equal suffixes starting at i
             // save seqid and the corresponding char 
-            int bits_to_write = tfmp.C[seqid+1] - tfmp.C[seqid];
+            int bits_to_write = tfmp.C[seqid+2] - tfmp.C[seqid+1];
             while(next < dsize && lcp[next] >= suffixLen) {
                 assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
                 assert(sa[next]>0 && d[sa[next]-1] != EndOfWord); // sa[next] cannot be a full word
                 int_t nextsuffixLen = getlen(sa[next],eos,dwords,&seqid);
                 assert(nextsuffixLen>=suffixLen);
                 if(nextsuffixLen==suffixLen) {
-                    bits_to_write += tfmp.C[seqid+1] - tfmp.C[seqid];
+                    bits_to_write += tfmp.C[seqid+2] - tfmp.C[seqid+1];
                     next++;
                 }
                 else break;
@@ -247,7 +247,6 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
     FILE *fdout= open_aux_file(arg.basename,"dout","wb");
 
     // main loop: consider each entry in the SA of dict
-    time_t start = time(NULL);
     long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
     uint32_t seqid;
     uint8_t cnt = 0, buffer = 0;
@@ -262,12 +261,12 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
         // ----- simple case: the suffix is a full word 
         if(sa[i] == 0 || d[sa[i]-1] == EndOfWord) {
             full_words++;
-            uint32_t start = tfmp.C[seqid], end = tfmp.C[seqid+1];
+            uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
-            uint32_t r = tfmp.din_rank(start+1);
             for (int j = start; j < end; j++) {
                 if (tfmp.din[j] == 1) {
                     uint32_t pos = tfmp.dout_select(tfmp.din_rank(j+1));
+                    if (tfmp.L[pos] == 0) pos = 0;
                     while (1) {
                         write_bitvector(fdout, tfmp.dout[pos], cnt, buffer);
                         if (tfmp.dout[++pos] == 1) break;
@@ -278,14 +277,14 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
         } else {
             // ----- hard case: there can be a group of equal suffixes starting at i
             // save seqid and the corresponding char 
-            int bits_to_write = tfmp.C[seqid+1] - tfmp.C[seqid];
+            int bits_to_write = tfmp.C[seqid+2] - tfmp.C[seqid+1];
             while(next < dsize && lcp[next] >= suffixLen) {
                 assert(lcp[next]==suffixLen);  // the lcp cannot be greater than suffixLen
                 assert(sa[next]>0 && d[sa[next]-1] != EndOfWord); // sa[next] cannot be a full word
                 int_t nextsuffixLen = getlen(sa[next],eos,dwords,&seqid);
                 assert(nextsuffixLen>=suffixLen);
                 if(nextsuffixLen==suffixLen) {
-                    bits_to_write += tfmp.C[seqid+1] - tfmp.C[seqid];
+                    bits_to_write += tfmp.C[seqid+2] - tfmp.C[seqid+1];
                     next++;
                 }
                 else break;
@@ -371,21 +370,8 @@ int main(int argc, char** argv) {
     if(e!=dsize) die("fread");
     fclose(g);
 
-    // read occ file
-    g = open_aux_file(arg.basename,EXTOCC,"rb");
-    fseek(g,0,SEEK_END);
-    e = ftell(g);
-    if(e<0) die("ftell occ file");
-    if(e%4!=0) die("invalid occ file");
-    int dwords = e/4;
-    cout  << "Dictionary words: " << dwords << endl;
-    uint32_t *occ = new uint32_t[dwords+1];  // dwords+1 since istart overwrites occ
-    rewind(g);
-    e = fread(occ,4,dwords,g);
-    if(e!=dwords) die("fread 2");
-    fclose(g);
-    assert(dwords==get_num_words(d,dsize));
-
+    uint32_t dwords = get_num_words(d, dsize);
+    
     // map end of phrases to phrase ids
     uint64_t *end_to_phrase = new uint64_t[dwords], cnt = 0;
     for (int i = 0; i < dsize; i++) {
@@ -415,14 +401,15 @@ int main(int argc, char** argv) {
 
     // convert occ entries into starting positions inside ilist
     // ilist also contains the position of EOF but we don't care about it since it is not in dict 
-    uint32_t last=1; // starting position in ilist of the smallest dictionary word  
+    uint32_t *occ = new uint32_t[dwords+1];
+    uint32_t last=0; // starting position in ilist of the smallest dictionary word  
     for(long i=0;i<dwords;i++) {
-        uint32_t tmp = occ[i];
+        uint32_t tmp = tfmp.C[i+2] - tfmp.C[i+1];
         occ[i] = last;
         last += tmp;
         //cout << i << " = " << occ[i] << " " << tfmp.C[i+1] - tfmp.C[i] << endl; 
     }
-    occ[dwords]=tfmp.L.size();
+    occ[dwords]=last;
 
     // compute SA and BWT of D and do some checking on them 
     uint_t *sa; int_t *lcp;
@@ -529,18 +516,20 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
 
     if(samechar) {
         for(size_t i = 0; i < numwords; i++) {
-            uint32_t s = id2merge[i];
+            uint32_t s = id2merge[i]+1;
             for(long j = tfmp.C[s]; j < tfmp.C[s+1]; j++) {
                 if(fputc(char2write[0],fbwt) == EOF) die("L write error 1");
             }
-            //cout << s << " " << tfmp.C[s+1] - tfmp.C[s] << endl;
             easy_bwts +=  tfmp.C[s+1] - tfmp.C[s]; 
+            //cout << easy_bwts + hard_bwts  << ":: numwords = " << numwords  <<" " << char2write[0] << " " << tfmp.C[s+1] - tfmp.C[s] << endl;
         }
     } else {  // many words, many chars...     
+        //cout << "STARTING SORTING " << endl;
         vector<SeqId> heap; // create heap
         for(size_t i=0; i<numwords; i++) {
-            uint32_t s = id2merge[i];
-            heap.push_back(SeqId(s,tfmp.C[s+1]-tfmp.C[s], ilist+tfmp.C[s], char2write[i]));
+            uint32_t s = id2merge[i]+1;
+            //cout << "phrase: " << s << " pos: " << ilist[tfmp.C[s]-1] << endl;
+            heap.push_back(SeqId(s,tfmp.C[s+1]-tfmp.C[s], ilist+(tfmp.C[s]-1), char2write[i]));
         }
         std::make_heap(heap.begin(),heap.end());
         while(heap.size()>0) {
@@ -549,6 +538,7 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
             if(fputc(s.char2write,fbwt)==EOF) die("L write error 2");
             hard_bwts += 1;
             // remove top 
+            //cout << "HEAPSORT:" <<  easy_bwts + hard_bwts  << ":::" << (*s.bwtpos) << "--" << s.char2write << " " << endl;
             pop_heap(heap.begin(),heap.end());
             heap.pop_back();
             // if remaining positions, reinsert to heap

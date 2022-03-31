@@ -119,7 +119,8 @@ int main(int argc, char **argv) {
 
         for (int i = 0; i < tfm.L.size(); i++) {
             uint32_t act_char = tfm.L[i];
-            phrase_sources[act_char].push_back(i);
+            if (act_char == 0) continue;
+            phrase_sources[act_char-1].push_back(i);
         }
         cout << "Inverted lists created!" << endl;
 

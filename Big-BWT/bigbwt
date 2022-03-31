@@ -35,6 +35,7 @@ shasum_exe      =  "sha256sum"
 # tunneling commands
 parsetunneling  =  os.path.join(dir_bigbwt, "tfm_index_construct.x")
 tunnelinginvert = os.path.join(dir_bigbwt, "tfm_index_invert.x")
+gen_ilist = os.path.join(dir_bigbwt, "tfm_generate_aux.x")
 pfwg_exe = os.path.join(dir_bigbwt, "pfwg.x")
 
 
@@ -46,13 +47,10 @@ def main():
   parser.add_argument('-w', '--wsize', help='sliding window size (def. 10)', default=10, type=int)
   parser.add_argument('-p', '--mod', help='hash modulus (def. 100)', default=100, type=int)
   parser.add_argument('-t', help='number of helper threads (def. None)', default=0, type=int)
-  parser.add_argument('-s',  help='compute the start run-length sampled Suffix Array',action='store_true')
-  parser.add_argument('-e',  help='compute the end run-length sampled Suffix Array',action='store_true')
-  parser.add_argument('-S',  help='compute the full Suffix Array',action='store_true')
   parser.add_argument('-k',  help='keep temporary files',action='store_true')
   parser.add_argument('-v',  help='verbose',action='store_true')
-  parser.add_argument('-c',  help='check BWT using SACA-K',action='store_true')
   parser.add_argument('-f', help='read fasta',action='store_true')
+  parser.add_argument('-i', help='invert the tunneled WG', action='store_true')
   parser.add_argument('--sum', help='compute output files sha256sum',action='store_true')
   parser.add_argument('--parsing',  help='stop after the parsing phase (debug only)',action='store_true')
   parser.add_argument('--compress',  help='compress output of the parsing phase (debug only)',action='store_true')
@@ -62,10 +60,6 @@ def main():
     print("bigbwt does not current support FASTQ format! Exiting...")
     return
 
-  if(args.S and (args.s or args.e)):
-    print("You can either compute the full SA or a sample of it, not both. Exiting...")
-    return
-    
   logfile_name = args.input + ".log"
   # get main bigbwt directory 
   args.bigbwt_dir = os.path.split(sys.argv[0])[0]  
@@ -82,7 +76,6 @@ def main():
       command = "{exe} {file} -w {wsize} -p {modulus}".format(
               exe = os.path.join(args.bigbwt_dir,parseNT_exe),
               wsize=args.wsize, modulus = args.mod, file=args.input)
-    if (args.s or args.e or args.S): command += " -s"
     if args.v: command += " -v"
     if args.parsing or args.compress: command += " -c"
     if args.f: command += " -f"
@@ -119,28 +112,17 @@ def main():
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start));      
 
-    # ----------- computation of the BWT of the parsing
+    # ----------- computation of the aux files 
+    command = "{exe} {w} {file}".format(
+        exe=os.path.join(dir_bigbwt, gen_ilist), w=args.wsize, file=args.input
+    )
+    print("==== ILIST generation. Command:", command)
     start = time.time()
-    parse_size = os.path.getsize(args.input+".parse")/4
-    if(parse_size >=  (2**32-1) ):
-      print("Sorry, the parse contains %d words" %  parse_size )
-      print("which is more than my current limit 2^32-2")
-      print("Please re-run the program with a larger modulus (currently %d)" % args.mod)
-      sys.exit(1)  
-    elif(parse_size >=  (2**31-1) ):
-      command = "{exe} {file}".format(
-              exe = os.path.join(args.bigbwt_dir,parsebwt_exe64), file=args.input)
-    else:
-      command = "{exe} {file}".format(
-              exe = os.path.join(args.bigbwt_dir,parsebwt_exe), file=args.input)
-    if (args.s or args.e or args.S): command += " -s"
-    if (args.t>0): command += " -t " + str(args.t)
-    print("==== Computing BWT of parsing. Command:", command)
     if(execute_command(command,logfile,logfile_name)!=True):
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start));      
-    
-    # ----------- compute final BWT using dictionary and BWT of parse    
+
+    # ----------- compute final tunneled WG using dictionary and BWT of parse    
     start = time.time()     
     if(os.path.getsize(args.input+".dict") >=  (2**31-4) ):
         print("The 64-bit version not yet supported, sorry!")
@@ -155,44 +137,35 @@ def main():
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start))      
     print("Total construction time: {0:.4f}".format(time.time()-start0))      
-    exit()
 
     # ---- compute sha256sum
     if args.sum:
-      digest = file_digest(args.input +".bwt",logfile)
-      print("BWT {exe}: {digest}".format(exe=shasum_exe, digest=digest))
-      if args.S:
-        digest = file_digest(args.input +".sa",logfile)
-        print("SA  {exe}: {digest}".format(exe=shasum_exe, digest=digest))
-      if args.s:
-        digest = file_digest(args.input +".ssa",logfile)
-        print("SSA {exe}: {digest}".format(exe=shasum_exe, digest=digest))
-      if args.e:
-        digest = file_digest(args.input +".esa",logfile)
-        print("ESA {exe}: {digest}".format(exe=shasum_exe, digest=digest))
+      digest = file_digest(args.input +".L",logfile)
+      print("L {exe}: {digest}".format(exe=shasum_exe, digest=digest))
+      digest = file_digest(args.input +".in",logfile)
+      print("Din {exe}: {digest}".format(exe=shasum_exe, digest=digest))
+      digest = file_digest(args.input +".dout",logfile)
+      print("Dout {exe}: {digest}".format(exe=shasum_exe, digest=digest))
  
     # ---- delete intermediate files
     delete_temp_files(args,logfile,logfile_name)
 
     # --- start checking ---
-    if args.c:
+    if args.i:
       start = time.time()
-      if(os.path.getsize(args.input)>= 2**31):
-        command = "{exe} {file}".format(
-                  exe = os.path.join(args.bigbwt_dir,bwt_exe64), file=args.input)
-      else:
-        command = "{exe} {file}".format(
-                  exe = os.path.join(args.bigbwt_dir,bwt_exe), file=args.input)
-      print("==== Computing BWT using sacak. Command:", command)       
+      command = "{exe} {file}".format(
+                  exe = os.path.join(args.bigbwt_dir, tunnelinginvert), file=args.input)
+      print("==== Inverting the tunneled WG. Command:", command)       
       if(execute_command(command,logfile,logfile_name)!=True):
         return   
       print("Elapsed time: {0:.4f}".format(time.time()-start));      
-      command = "cmp {file}.bwt {file}.Bwt".format(file=args.input); 
-      print("==== Comparing BWTs. Command:", command);
+      command = "cmp {file} {file}.untunneled".format(file=args.input); 
+      print("==== Comparing the file with the inverted WG. Command:", command);
       if(execute_command(command,logfile,logfile_name)):
-        print("BWTs match");
+        print("OK");
       else:
-        print("BWTs differ");
+        print("Inverted file differs");
+        return 1
     # --- end checking ---
 
   print("==== Done")
@@ -201,22 +174,9 @@ def main():
 def delete_temp_files(args,logfile,logfile_name):
     if args.k==False:  
       print("==== Deleting temporary files.") # no need to show the command
-      command = "rm -f {file}.parse {file}.parse_old {file}.last {file}.bwlast {file}.dict {file}.ilist {file}.occ".format(file=args.input)
+      command = "rm -f {file}.parse {file}.parse_old {file}.dict {file}.ilist {file}.occ {file}.tunnel".format(file=args.input)
       if(execute_command(command,logfile,logfile_name)!=True):
         return
-      for i in range(args.t):
-        command = "rm -f {file}.{i}.parse_old {file}.{i}.last".format(file=args.input, i=i)
-        if(execute_command(command,logfile,logfile_name)!=True):
-          return
-      if args.s or args.S:
-        command = "rm -f {file}.sai {file}.bwsai".format(file=args.input);
-        if(execute_command(command,logfile,logfile_name)!=True):
-          return
-        for i in range(args.t):
-          command = "rm -f {file}.{i}.sai".format(file=args.input, i=i)
-          if(execute_command(command,logfile,logfile_name)!=True):
-            return
-
 
 # compute hash digest for a file 
 def file_digest(name,logfile):

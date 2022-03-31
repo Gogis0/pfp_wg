@@ -35,9 +35,7 @@ shasum_exe      =  "sha256sum"
 # tunneling commands
 parsetunneling  =  os.path.join(dir_bigbwt, "tfm_index_construct.x")
 tunnelinginvert = os.path.join(dir_bigbwt, "tfm_index_invert.x")
-gen_ilist = os.path.join(dir_bigbwt, "tfm_generate_aux.x")
 pfwg_exe = os.path.join(dir_bigbwt, "pfwg.x")
-
 
 
 
@@ -112,17 +110,7 @@ def main():
       return
     print("Elapsed time: {0:.4f}".format(time.time()-start));      
 
-    # ----------- computation of the aux files 
-    command = "{exe} {w} {file}".format(
-        exe=os.path.join(dir_bigbwt, gen_ilist), w=args.wsize, file=args.input
-    )
-    print("==== ILIST generation. Command:", command)
-    start = time.time()
-    if(execute_command(command,logfile,logfile_name)!=True):
-      return
-    print("Elapsed time: {0:.4f}".format(time.time()-start));      
-
-    # ----------- compute final tunneled WG using dictionary and BWT of parse    
+    # ----------- compute final tunneled WG using dictionary and a tunneled WG of parse    
     start = time.time()     
     if(os.path.getsize(args.input+".dict") >=  (2**31-4) ):
         print("The 64-bit version not yet supported, sorry!")

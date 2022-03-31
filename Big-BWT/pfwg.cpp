@@ -51,6 +51,13 @@ struct Args {
     int w = 10;            // sliding window size and its default 
 };
 
+struct Dict {
+    uint8_t *d;  // pointer to the dictionary
+    uint64_t *end;   // end[i] is the index of the ending symbol of the i-th phrase
+    uint64_t dsize;  // dicionary size in symbols
+    uint64_t dwords;  // the number of phrases of the dicionary
+};
+
 static long get_num_words(uint8_t *d, long n);
 static long binsearch(uint_t x, uint_t a[], long n);
 static int_t getlen(uint_t p, uint_t eos[], long n, uint32_t *seqid);
@@ -106,8 +113,8 @@ void write_bitvector(FILE *f, bool bit, uint8_t &cnt, uint8_t &buffer, bool hard
  * ilist[k] contains the ordered positions in BWT(P) containing word i 
  * ******************************************************************* */
 void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictionary and its size  
-         uint32_t *ilist, tfm_index<> &tfmp,long psize, // ilist, last and their size 
-         uint32_t *istart, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
+         uint32_t *ilist, tfm_index<> &tfmp, // ilist, last and their size 
+         long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
     // set d[0]==0 as this is the EOF char in the final BWT
     assert(d[0]==Dollar);
@@ -182,8 +189,8 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
 }
 
 void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictionary and its size  
-         uint32_t *ilist, tfm_index<> &tfmp,long psize, // ilist, last and their size 
-         uint32_t *istart, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
+         uint32_t *ilist, tfm_index<> &tfmp, // ilist, last and their size 
+         long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
@@ -236,8 +243,8 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
 }
 
 void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictionary and its size  
-         uint32_t *ilist, tfm_index<> &tfmp,long psize, // ilist, last and their size 
-         uint32_t *istart, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
+         uint32_t *ilist, tfm_index<> &tfmp, // ilist, last and their size 
+         long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
@@ -343,6 +350,57 @@ void parseArgs( int argc, char** argv, Args& arg ) {
 }
 
 
+Dict read_dictionary(char *filename) {
+        FILE *g = open_aux_file(filename, EXTDICT,"rb");
+        fseek(g, 0, SEEK_END);
+        long dsize = ftell(g);
+        if(dsize < 0) die("ftell dictionary");
+        if(dsize <= 1+4) die("invalid dictionary file");
+        cout  << "Dictionary file size: " << dsize << endl;
+        #if !M64
+        if(dsize > 0x7FFFFFFE) {
+            printf("Dictionary size greater than  2^31-2!\n");
+            printf("Please use 64 bit version\n");
+            exit(1);
+        }
+        #endif
+
+        uint8_t *d = new uint8_t[dsize];
+        rewind(g);
+        uint64_t e = fread(d, 1, dsize, g);
+        if(e!=dsize) die("fread");
+        fclose(g);
+
+        uint64_t dwords = 0;
+        for (int i = 0; i < dsize; i++) {
+            if (d[i] == EndOfWord) dwords++;
+        }
+        cout << "Dictionary contains " << dwords << " words" << endl;
+
+        uint64_t *end= new uint64_t[dwords];
+        int cnt = 0;
+        for (int i = 0; i < dsize; i++) {
+            if (d[i] == EndOfWord) end[cnt++] = i;
+        }
+
+        Dict res = {d, end, dsize, dwords};
+        return res;
+}
+
+void generate_ilist(uint32_t *ilist, tfm_index<> &tfmp, uint64_t dwords) {
+    vector<vector<uint32_t>> phrase_sources(dwords);
+    for (int i = 0; i < tfmp.L.size(); i++) {
+        uint32_t act_char = tfmp.L[i];
+        if (act_char == 0) continue;
+        phrase_sources[act_char-1].push_back(i);
+    }
+    uint64_t cnt = 0;
+    for (int i = 0; i < phrase_sources.size(); i++) {
+        for (int j = 0; j < (int)phrase_sources[i].size(); j++) ilist[cnt++] = phrase_sources[i][j];
+    }
+}
+
+
 int main(int argc, char** argv) {
     time_t start = time(NULL);  
 
@@ -350,77 +408,27 @@ int main(int argc, char** argv) {
     Args arg;
     parseArgs(argc, argv, arg);
     // read dictionary file 
-    FILE *g = open_aux_file(arg.basename,EXTDICT,"rb");
-    fseek(g,0,SEEK_END);
-    long dsize = ftell(g);
-    if(dsize<0) die("ftell dictionary");
-    if(dsize<=1+arg.w) die("invalid dictionary file");
-    cout  << "Dictionary file size: " << dsize << endl;
-    #if !M64
-    if(dsize > 0x7FFFFFFE) {
-        printf("Dictionary size greater than  2^31-2!\n");
-        printf("Please use 64 bit version\n");
-        exit(1);
-    }
-    #endif
-
-    uint8_t *d = new uint8_t[dsize];  
-    rewind(g);
-    long e = fread(d,1,dsize,g);
-    if(e!=dsize) die("fread");
-    fclose(g);
-
-    uint32_t dwords = get_num_words(d, dsize);
-    
-    // map end of phrases to phrase ids
-    uint64_t *end_to_phrase = new uint64_t[dwords], cnt = 0;
-    for (int i = 0; i < dsize; i++) {
-        if (d[i] == EndOfWord) end_to_phrase[cnt++] = i;
-    }
-
-    // read ilist file 
-    g = open_aux_file(arg.basename,EXTILIST,"rb");
-    fseek(g,0,SEEK_END);
-    e = ftell(g);
-    if(e<0) die("ftell ilist file");
-    if(e%4!=0) die("invalid ilist file");
-    long psize = e/4;
-    cout  << "Parsing size: " << psize << endl;
-    if(psize>0xFFFFFFFEL) die("More than 2^32 -2 words in the parsing");
-    uint32_t *ilist = new uint32_t[psize];  
-    rewind(g);
-    e = fread(ilist,4,psize,g);
-    if(e!=psize) die("fread 3");
-    fclose(g);
-
+    struct Dict dict = read_dictionary(arg.basename);
+     
     // read the tunneled WG of the parse
     char *name;
     asprintf(&name, "%s.%s", arg.basename, "tunnel");
     tfm_index<> tfmp;
     load_from_file(tfmp, name);
 
-    // convert occ entries into starting positions inside ilist
-    // ilist also contains the position of EOF but we don't care about it since it is not in dict 
-    uint32_t *occ = new uint32_t[dwords+1];
-    uint32_t last=0; // starting position in ilist of the smallest dictionary word  
-    for(long i=0;i<dwords;i++) {
-        uint32_t tmp = tfmp.C[i+2] - tfmp.C[i+1];
-        occ[i] = last;
-        last += tmp;
-        //cout << i << " = " << occ[i] << " " << tfmp.C[i+1] - tfmp.C[i] << endl; 
-    }
-    occ[dwords]=last;
+    uint32_t *ilist = new uint32_t[tfmp.L.size()-1];
+    generate_ilist(ilist, tfmp, dict.dwords);
 
     // compute SA and BWT of D and do some checking on them 
     uint_t *sa; int_t *lcp;
-    compute_dict_bwt_lcp(d, dsize, dwords, arg.w, &sa, &lcp);
+    compute_dict_bwt_lcp(dict.d, dict.dsize, dict.dwords, arg.w, &sa, &lcp);
 
-    bwt(arg,d,dsize,end_to_phrase,ilist,tfmp,psize,occ,dwords,sa,lcp);
-    din(arg,d,dsize,end_to_phrase,ilist,tfmp,psize,occ,dwords,sa,lcp);
-    dout(arg,d,dsize,end_to_phrase,ilist,tfmp,psize,occ,dwords,sa,lcp);
+    bwt(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
+    din(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
+    dout(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
     delete[] ilist;
-    delete[] occ;
-    delete[] d;  
+    delete[] dict.d;  
+    delete[] dict.end;  
     delete[] lcp;
     delete[] sa;
     cout << "==== Elapsed time: " << difftime(time(NULL),start) << " wall clock seconds\n";      

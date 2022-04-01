@@ -69,7 +69,8 @@ int main(int argc, char **argv) {
         */
         
         char *name;
-        asprintf(&name, "%s.%s", argv[1], "untunneled");
+        int e = asprintf(&name, "%s.%s", argv[1], "untunneled");
+        if (e == -1) {cout << "ERROR while creating the output file name!" << endl; return 1; }
         FILE *fout = fopen(name, "w");
         fwrite(S, sizeof(char), tfm.size(), fout);
         fclose(fout);

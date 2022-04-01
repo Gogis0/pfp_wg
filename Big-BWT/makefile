@@ -85,14 +85,6 @@ remap: remap.c
 %.o: %.c %.h
 	$(CC) $(CFLAGS) -c -o $@ $<
 
-tarfile:
-		tar -zcf bigbwt.tgz bigbwt newscan.[ch]pp pscan.[ch]pp pfbwt.cpp pfthreads.hpp simplebwt.c bwtparse.c unparse.c remap.c makefile utils.[ch] xerrors.[ch] f2s.py gsa/gsacak.[ch] gsa/LICENSE gsa/README.md malloc_count.[ch]
-
-clean:
-	rm -f $(EXECS) $(EXECS_NT) *.o gsa/*.o
-	rm -f *.sdsl
-	rm -f *.x
-
 #DBG EXECUTABLES
 tfm_index_construct.x: include/tfm_index.hpp include/dbg_algorithms.hpp tfm_index_construct.cpp
 	$(MY_CXX) -Wall -Wextra $(MY_CXX_FLAGS) $(MY_CXX_OPT_FLAGS) $(C_OPTIONS) \
@@ -136,3 +128,8 @@ $(TEST_INPUTS): tfm_index_invert.x $(EXECS) $(EXECS_NT)
 $(INVERT_TESTS): tfm_index_invert.x
 	./tfm_index_invert.x $@
 	diff $@ $@.untunneled
+
+clean:
+	rm -f $(EXECS) $(EXECS_NT) *.o gsa/*.o
+	rm -f *.x
+

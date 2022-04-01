@@ -73,7 +73,7 @@ pfbwtNT64.x: pfbwt.cpp gsa/gsacak64.o utils.o malloc_count.o
 	$(CXX) $(CXX_FLAGS) -o $@ $^ -ldl -DNOTHREADS -DM64
 
 # prefix free WG construction
-pfwg.x: pfwg.cpp pfthreads.hpp gsa/gsacak.o utils.o xerrors.o malloc_count.o
+pfwg.x: pfwg.cpp include/tfm_index.hpp  gsa/gsacak.o utils.o xerrors.o malloc_count.o
 	$(CXX) $(CXX_FLAGS) -o $@ pfwg.cpp -I$(INC_DIR) -L$(LIB_DIR) -Iinclude -Llib gsa/gsacak.o  utils.o xerrors.o malloc_count.o -pthread -ldl $(LIBS)
 
 unparse: unparse.c utils.o malloc_count.o

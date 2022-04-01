@@ -220,10 +220,10 @@ int main(int argc, char **argv) {
         cout << "tfm_index_size\t" << tfm_size << endl;
         cout << "min_dbg_k\t" << min_k << endl;
         cout << "min_dbg_edges\t" << min_edges << endl;
-        cout << "L:  " << tfm.L << endl;
+        //cout << "L:  " << tfm.L << endl;
         //cout << "C:  " << tfm.C  << endl;
-        cout << "Din:  " << tfm.din << endl;
-        cout << "Dout: " << tfm.dout << endl;
+        //cout << "Din:  " << tfm.din << endl;
+        //cout << "Dout: " << tfm.dout << endl;
         //memory_monitor::write_memory_log<leet_format>(cout);
     }
 

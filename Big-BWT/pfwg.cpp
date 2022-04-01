@@ -415,6 +415,7 @@ int main(int argc, char** argv) {
     asprintf(&name, "%s.%s", arg.basename, "tunnel");
     tfm_index<> tfmp;
     load_from_file(tfmp, name);
+    //cout << "TFM LOADED" << endl;
 
     uint32_t *ilist = new uint32_t[tfmp.L.size()-1];
     generate_ilist(ilist, tfmp, dict.dwords);

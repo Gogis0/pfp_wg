@@ -54,10 +54,8 @@
 struct tfm_index_tag {
 };
 
-//const int width = 32; // move where appropriate
-
 //! a class representing a tunneled fm-index
-template<class t_wt_type =       sdsl::wt_int<>, // originally was balanced, but oh well
+template<class t_wt_type =       sdsl::wt_blcd_int<>, // wt_int and wt_blcd_int can be used interchangeably
         class t_bv_type =       typename t_wt_type::bit_vector_type,
         class t_rank_type =     typename t_bv_type::rank_1_type,
         class t_select_type =   typename t_bv_type::select_1_type>
@@ -84,14 +82,6 @@ private:
             t_tfm_index_type &tfm_index,
             uint64_t text_len,
             sdsl::int_vector_buffer<> &&L_buf,
-            sdsl::bit_vector &&dout,
-            sdsl::bit_vector &&din
-    );
-
-    friend void construct_tfm_index_tmp(
-            tfm_index<> &tfm_index,
-            uint64_t text_len,
-            sdsl::wt_int<> &&L,
             sdsl::bit_vector &&dout,
             sdsl::bit_vector &&din
     );
@@ -153,14 +143,11 @@ public:
         size_type &i = pos.first; //create references into position pair
         size_type &o = pos.second;
 
-        int oldi = i;
         //navigate to next entry
         auto is = L.inverse_select(i);
         auto c = is.second;
         i = C[c] + is.first;
-        //std::cout << L << std::endl;
 
-        //std::cout << "C: " << (char)c <<  "\t C[c]: " << C[c] << "\trank(" << (char)is.second << "," << oldi << ") =" << is.first  << std::endl;
         //check for the start of a tunnel
         auto din_rank_ip1 = din_rank(i + 1);
         if (din[i] == 0) {
@@ -241,12 +228,6 @@ void construct(t_index &idx, const std::string &file, sdsl::cache_config &config
     }
 };
 
-/*
-template<class t_index>
-void construct(t_index &idx, const std::string &file) {
-    construct_from_pfwg(idx, file);
-};
-*/
 
 //! function constructs a tfm index using a compressed suffix array in form of a BWT in a wavelet tree.
 //! note that the csa is erased during construction
@@ -307,15 +288,13 @@ construct_tfm_index(t_tfm_index_type &tfm_index, t_csa_wt_type &&csa, sdsl::cach
 
 
 void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector_buffer<> &L, uint64_t sigma) {
-    //std::cout << "sigma: " << sigma << std::endl;
     C = std::vector<uint64_t>(sigma+1, 0);
     for (uint64_t i = 0; i < L.size(); i++) C[L[i]+1] += 1;
     for (uint64_t i = 0; i < sigma; i++) C[i+1] += C[i];
 }
 
-void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector<8> &L, uint64_t sigma) {
-    //std::cout << "sigma: " << sigma << std::endl;
-    C = std::vector<uint64_t>(500, 0); // lol I hope it's enought :D
+void symbol_frequencies(std::vector<uint64_t> &C, sdsl::int_vector<8> &L) {
+    C = std::vector<uint64_t>(500, 0); // lol I hope it's enough :D
     for (uint64_t i = 0; i < L.size(); i++) C[L[i]+1] += 1;
     for (uint64_t i = 0; i < C.size()-1; i++) {
         C[i+1] += C[i];
@@ -334,7 +313,6 @@ void construct_tfm_index(t_tfm_index_type &tfm_index, uint64_t text_len, sdsl::i
 
     //wavelet tree of L
     tfm_index.m_L = wt_type(L_buf, L_buf.size());
-    //sdsl::create_C_array(tfm_index.m_C, tfm_index.m_L);
     symbol_frequencies(tfm_index.m_C, L_buf, tfm_index.m_L.sigma);
 
     //dout
@@ -352,7 +330,7 @@ void load_bitvector(sdsl::int_vector<1> &B, const std::string filename, const ui
     FILE *fin = fopen(filename.c_str(), "rb");
     uint64_t cnt = 0;
     uint8_t buffer = 0;
-    for (int i = 0; i < (n+7)/8; i++) {
+    for (uint64_t i = 0; i < (n+7)/8; i++) {
         fread(&buffer, sizeof(uint8_t), 1, fin);
         //std::cout << (int) buffer << std::endl;
         for (int j = 0; j < 8; j++) {
@@ -385,10 +363,10 @@ void construct_from_pfwg(t_tfm_index_type &tfm_index, const std::string basename
     typedef ::tfm_index<>::bit_vector_type bv_type;
 
     tfm_index.text_len = original.size();
-    sdsl::int_vector_buffer<8> buf (basename + ".L", std::ios::in, size, 8, true);
+    sdsl::int_vector_buffer<> buf (basename + ".L", std::ios::in, size, 8, true);
     tfm_index.m_L = wt_type(buf, size);
 
-    symbol_frequencies(tfm_index.m_C, L, tfm_index.m_L.sigma);
+    symbol_frequencies(tfm_index.m_C, L);
     tfm_index.m_dout = bv_type(std::move(dout));
     sdsl::util::init_support(tfm_index.m_dout_rank, &tfm_index.m_dout);
     sdsl::util::init_support(tfm_index.m_dout_select, &tfm_index.m_dout);

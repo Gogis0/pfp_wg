@@ -58,7 +58,6 @@ struct Dict {
     uint64_t dwords;  // the number of phrases of the dicionary
 };
 
-static long get_num_words(uint8_t *d, long n);
 static long binsearch(uint_t x, uint_t a[], long n);
 static int_t getlen(uint_t p, uint_t eos[], long n, uint32_t *seqid);
 static void compute_dict_bwt_lcp(uint8_t *d, long dsize,long dwords, int w, uint_t **sap, int_t **lcpp);
@@ -144,7 +143,7 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
             full_words++;
             uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
-            for (int j = start; j < end; j++) {
+            for (uint32_t j = start; j < end; j++) {
                 if (tfmp.din[j] == 1) {
                     uint32_t pos = tfmp.dout_select(tfmp.din_rank(j+1));
                     while (1) {
@@ -188,9 +187,8 @@ void bwt(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     fclose(fbwt);
 }
 
-void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictionary and its size  
-         uint32_t *ilist, tfm_index<> &tfmp, // ilist, last and their size 
-         long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
+void din(Args &arg, uint8_t *d, long dsize, // dictionary and its size  
+         tfm_index<> &tfmp, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
@@ -200,7 +198,7 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     FILE *fdin = open_aux_file(arg.basename,"din","wb");
 
     // main loop: consider each entry in the SA of dict
-    long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
+    long next;
     uint32_t seqid;
     uint8_t cnt = 0, buffer = 0;
     for(long i=dwords+arg.w+1; i < dsize; i = next) {
@@ -213,10 +211,9 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
         if(suffixLen <= arg.w) continue;
         // ----- simple case: the suffix is a full word 
         if(sa[i] == 0 || d[sa[i]-1] == EndOfWord) {
-            full_words++;
             uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
-            for (int j = start; j < end; j++) {
+            for (uint32_t j = start; j < end; j++) {
                 write_bitvector(fdin, tfmp.din[j], cnt, buffer);
             }
             continue; // proceed with next i 
@@ -242,9 +239,8 @@ void din(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictiona
     fclose(fdin);
 }
 
-void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // dictionary and its size  
-         uint32_t *ilist, tfm_index<> &tfmp, // ilist, last and their size 
-         long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
+void dout(Args &arg, uint8_t *d, long dsize, // dictionary and its size  
+         tfm_index<> &tfmp, long dwords, uint_t *sa, int_t *lcp) { // starting point in ilist for each word and # words
     
     // derive eos from sa. for i=0...dwords-1, eos[i] is the eos position of string i in d
     uint_t *eos = sa+1;
@@ -254,7 +250,7 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
     FILE *fdout= open_aux_file(arg.basename,"dout","wb");
 
     // main loop: consider each entry in the SA of dict
-    long full_words = 0, easy_bwts = 0, hard_bwts = 0, next;
+    long next;
     uint32_t seqid;
     uint8_t cnt = 0, buffer = 0;
     for(long i=dwords+arg.w+1; i < dsize; i = next) {
@@ -267,10 +263,9 @@ void dout(Args &arg, uint8_t *d, long dsize, uint64_t *end_to_phrase, // diction
         if(suffixLen <= arg.w) continue;
         // ----- simple case: the suffix is a full word 
         if(sa[i] == 0 || d[sa[i]-1] == EndOfWord) {
-            full_words++;
             uint32_t start = tfmp.C[seqid+1], end = tfmp.C[seqid+2];
             assert(tfmp.din[start] == 1);
-            for (int j = start; j < end; j++) {
+            for (uint32_t j = start; j < end; j++) {
                 if (tfmp.din[j] == 1) {
                     uint32_t pos = tfmp.dout_select(tfmp.din_rank(j+1));
                     if (tfmp.L[pos] == 0) pos = 0;
@@ -368,7 +363,7 @@ Dict read_dictionary(char *filename) {
         uint8_t *d = new uint8_t[dsize];
         rewind(g);
         uint64_t e = fread(d, 1, dsize, g);
-        if(e!=dsize) die("fread");
+        if (e != (uint64_t)dsize) die("Dictionary fread errror!");
         fclose(g);
 
         uint64_t dwords = 0;
@@ -383,19 +378,19 @@ Dict read_dictionary(char *filename) {
             if (d[i] == EndOfWord) end[cnt++] = i;
         }
 
-        Dict res = {d, end, dsize, dwords};
+        Dict res = {d, end, e, dwords};
         return res;
 }
 
 void generate_ilist(uint32_t *ilist, tfm_index<> &tfmp, uint64_t dwords) {
     vector<vector<uint32_t>> phrase_sources(dwords);
-    for (int i = 0; i < tfmp.L.size(); i++) {
+    for (uint64_t i = 0; i < tfmp.L.size(); i++) {
         uint32_t act_char = tfmp.L[i];
         if (act_char == 0) continue;
         phrase_sources[act_char-1].push_back(i);
     }
     uint64_t cnt = 0;
-    for (int i = 0; i < phrase_sources.size(); i++) {
+    for (uint64_t i = 0; i < phrase_sources.size(); i++) {
         for (int j = 0; j < (int)phrase_sources[i].size(); j++) ilist[cnt++] = phrase_sources[i][j];
     }
 }
@@ -412,7 +407,8 @@ int main(int argc, char** argv) {
      
     // read the tunneled WG of the parse
     char *name;
-    asprintf(&name, "%s.%s", arg.basename, "tunnel");
+    int e = asprintf(&name, "%s.%s", arg.basename, "tunnel");
+    if (e == -1) die("ERROR during the creation of a tunneled WG of P filename!");
     tfm_index<> tfmp;
     load_from_file(tfmp, name);
     //cout << "TFM LOADED" << endl;
@@ -425,8 +421,8 @@ int main(int argc, char** argv) {
     compute_dict_bwt_lcp(dict.d, dict.dsize, dict.dwords, arg.w, &sa, &lcp);
 
     bwt(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
-    din(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
-    dout(arg,dict.d,dict.dsize,dict.end,ilist,tfmp,dict.dwords,sa,lcp);
+    din(arg,dict.d,dict.dsize,tfmp,dict.dwords,sa,lcp);
+    dout(arg,dict.d,dict.dsize,tfmp,dict.dwords,sa,lcp);
     delete[] ilist;
     delete[] dict.d;  
     delete[] dict.end;  
@@ -437,14 +433,6 @@ int main(int argc, char** argv) {
 }
 
 // --------------------- aux functions ----------------------------------
-
-// compute the number of words in a dictionary
-static long get_num_words(uint8_t *d, long n) {
-    long i, num = 0;
-    for(i = 0; i < n; i++) if(d[i]==EndOfWord) num++;
-    assert(d[n-1]==EndOfDict);
-    return num;
-}
 
 // binary search for x in an array a[0..n-1] that doesn't contain x
 // return the lowest position that is larger than x
@@ -526,7 +514,7 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
     if(samechar) {
         for(size_t i = 0; i < numwords; i++) {
             uint32_t s = id2merge[i]+1;
-            for(long j = tfmp.C[s]; j < tfmp.C[s+1]; j++) {
+            for(uint64_t j = tfmp.C[s]; j < tfmp.C[s+1]; j++) {
                 if(fputc(char2write[0],fbwt) == EOF) die("L write error 1");
             }
             easy_bwts +=  tfmp.C[s+1] - tfmp.C[s]; 

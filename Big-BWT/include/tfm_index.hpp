@@ -331,7 +331,8 @@ void load_bitvector(sdsl::int_vector<1> &B, const std::string filename, const ui
     uint64_t cnt = 0;
     uint8_t buffer = 0;
     for (uint64_t i = 0; i < (n+7)/8; i++) {
-        fread(&buffer, sizeof(uint8_t), 1, fin);
+        int e = fread(&buffer, sizeof(uint8_t), 1, fin);
+        if (e > 0) std::cout << "ERROR during bitvector loading!" << std::endl;
         //std::cout << (int) buffer << std::endl;
         for (int j = 0; j < 8; j++) {
             bool bit = 1 & (buffer >> (7-j));

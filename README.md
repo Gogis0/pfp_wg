@@ -1,22 +1,14 @@
 Original work:                              \
-https://gitlab.com/manzai/bigrepair         \
+https://gitlab.com/manzai/Big-BWT           \
 https://github.com/simongog/sdsl-lite       \
 https://github.com/waYne1337/BWT-Tunneling  \
 
-This repository is not used \
-https://gitlab.com/manzai/Big-BWT
-
-# How to install and run test
+# How to install and run
 ```
-git clone --recurse-submodules https://github.com/andynet/cds_project.git
-cd cds_project/sdsl-lite/
-./install.sh ..
-cd ../
-cmake -S . -B build
-cd build/
-make
-cd ../
-./run.sh
-./tunneled_run.sh
+1. Install system-wide SDSL according to the instructions
+2. Run `git clone https://github.com/andynet/cds_project.git`
+3. Open cds_project/Big-BWT/makefile and set correct `include path-to-sdsl-repo/sdsl-lite/Make.helper`
+4. Run `make`
+5. Run `./bigbwt -w 4 -p 50 -i data/yeast.raw`
 ```
 

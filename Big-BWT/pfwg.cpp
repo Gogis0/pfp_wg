@@ -1,14 +1,11 @@
 /* **************************************************************************
- * pfbwt.cpp
- * Output the BWT, the SA (option -S) or the sampled SA (option -s)
- * computed using the prefix-free parsing technique
+ * pfwg.cpp
+ * Output the tunneled Wheeler graph computed using the prefix-free parsing technique
  *  
  * Usage:
- *   pfbwt[NT][64].x -h
+ *   pfwg.x -h
  * for usage info
  *
- * See newscan.cpp for a description of what it does  
- * 
  **************************************************************************** */
 #include <assert.h>
 #include <errno.h>
@@ -28,8 +25,6 @@
 #include <random>
 #include <vector>
 #include <map>
-#include <sdsl/int_vector.hpp>
-#include <sdsl/util.hpp>
 #include "tfm_index.hpp"
 extern "C" {
 #include "gsa/gsacak.h"
@@ -45,9 +40,7 @@ using namespace sdsl;
 struct Args {
     char *basename;
     string parseExt =  EXTPARSE;    // extension final parse file  
-    string occExt =    EXTOCC;      // extension occurrences file  
     string dictExt =   EXTDICT;     // extension dictionary file  
-    string lastExt =   EXTLST;      // extension file containing last chars   
     int w = 10;            // sliding window size and its default 
 };
 
@@ -411,7 +404,6 @@ int main(int argc, char** argv) {
     if (e == -1) die("ERROR during the creation of a tunneled WG of P filename!");
     tfm_index<> tfmp;
     load_from_file(tfmp, name);
-    //cout << "TFM LOADED" << endl;
 
     uint32_t *ilist = new uint32_t[tfmp.L.size()-1];
     generate_ilist(ilist, tfmp, dict.dwords);
@@ -518,10 +510,9 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
                 if(fputc(char2write[0],fbwt) == EOF) die("L write error 1");
             }
             easy_bwts +=  tfmp.C[s+1] - tfmp.C[s]; 
-            //cout << easy_bwts + hard_bwts  << ":: numwords = " << numwords  <<" " << char2write[0] << " " << tfmp.C[s+1] - tfmp.C[s] << endl;
         }
-    } else {  // many words, many chars...     
-        //cout << "STARTING SORTING " << endl;
+    } else {
+        // many words, many chars...     
         vector<SeqId> heap; // create heap
         for(size_t i=0; i<numwords; i++) {
             uint32_t s = id2merge[i]+1;
@@ -535,7 +526,6 @@ static void fwrite_chars_same_suffix(vector<uint32_t> &id2merge,  vector<uint8_t
             if(fputc(s.char2write,fbwt)==EOF) die("L write error 2");
             hard_bwts += 1;
             // remove top 
-            //cout << "HEAPSORT:" <<  easy_bwts + hard_bwts  << ":::" << (*s.bwtpos) << "--" << s.char2write << " " << endl;
             pop_heap(heap.begin(),heap.end());
             heap.pop_back();
             // if remaining positions, reinsert to heap

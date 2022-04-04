@@ -8,7 +8,6 @@ EXECS=bwtparse bwtparse64 simplebwt simplebwt64 newscan.x pscan.x pfbwt.x pfwg.x
 # executables not using threads (and therefore not needing the thread library)
 EXECS_NT=newscanNT.x pfbwtNT.x pfbwtNT64.x
 
-include ~/sdsl-lite/Make.helper
 LIBS = -lsdsl -ldivsufsort -ldivsufsort64
 
 #DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x

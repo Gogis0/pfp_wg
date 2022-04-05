@@ -4,11 +4,19 @@ CFLAGS=-O3 -Wall -std=c99 -g
 CC=gcc
 
 # main executables 
-EXECS=bwtparse bwtparse64 simplebwt simplebwt64 newscan.x pscan.x pfbwt.x pfwg.x pfbwt64.x unparse remap
+EXECS=bwtparse bwtparse64 simplebwt simplebwt64 newscan.x pscan.x pfbwt.x pfwg.x pfbwt64.x unparse remap num_runs
 # executables not using threads (and therefore not needing the thread library)
 EXECS_NT=newscanNT.x pfbwtNT.x pfbwtNT64.x
 
+################################################## originally included from Make.helper from the sdsl source dir
+LIB_DIR = /home/$(USER)/lib
+INC_DIR = /home/$(USER)/include
+MY_CXX_FLAGS= -std=c++11 -Wall -Wextra -DNDEBUG $(CODE_COVER)
+MY_CXX_OPT_FLAGS= -O3 -ffast-math -funroll-loops -msse4.2 -march=native -msse4.2 -march=native -DHAVE_CXA_DEMANGLE
+MY_CXX=/usr/bin/c++
+MY_CC=/usr/bin/cc
 LIBS = -lsdsl -ldivsufsort -ldivsufsort64
+##################################################
 
 #DBGEXECUTABLES = tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x dbg_edgespectrum.x
 DBGEXECUTABLES =  tfm_index_construct.x tfm_index_invert.x tfm_index_invert_to_binary.x
@@ -127,6 +135,9 @@ $(TEST_INPUTS): tfm_index_invert.x $(EXECS) $(EXECS_NT)
 $(INVERT_TESTS): tfm_index_invert.x
 	./tfm_index_invert.x $@
 	diff $@ $@.untunneled
+
+num_runs: num_runs.c
+	gcc num_runs.c -o num_runs
 
 clean:
 	rm -f $(EXECS) $(EXECS_NT) *.o gsa/*.o

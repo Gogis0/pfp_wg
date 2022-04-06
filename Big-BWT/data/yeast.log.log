@@ -1,4 +1,0 @@
-==== Command line:
- /home/gogis/cds_project/Big-BWT/newscanNT.x yeast.log -w 10 -p 100
-Windows size: 10
-Stop word modulus: 100

@@ -37,7 +37,7 @@
 
 #include <sdsl/util.hpp>
 
-#include "../include/tfm_index.hpp"
+#include "tfm_index.hpp"
 
 using namespace std;
 using namespace sdsl;

@@ -331,8 +331,8 @@ void parseArgs( int argc, char** argv, Args& arg ) {
         cout << "Invalid number of arguments" << endl;
         print_help(argv,arg);
     }
-    if(arg.w <2) {
-        cout << "Windows size must be at least 2\n";
+    if(arg.w <1) {
+        cout << "Windows size must be at least 1\n";
         exit(1);
     }
 }

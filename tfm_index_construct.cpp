@@ -54,17 +54,11 @@ using namespace sdsl;
 typedef uint_t sa_index_t;
 
 void printUsage(char **argv) {
-    cerr << "USAGE: " << argv[0] << " [OPTIONS] INFILE TFMOUTFILE" << endl;
-    cerr << "OPTIONS:" << endl;
-    cerr << "  -i\tEnable informative mode, printing memory peaks (in bytes) and" << endl;
-    cerr << "    \tconstruction timings (in milliseconds) during construction" << endl;
-    cerr << "  -sa\tChoose suffix array construction algorithm. Must be followed by one of:" << endl;
-    cerr << "     \tDIVSUFSORT   use divsufsort (fast but memory-intensive)" << endl;
-    cerr << "     \tSE_SAIS         use a semi-external algorithm (slower but lower mem peak)" << endl;
+    cerr << "USAGE: " << argv[0] << " INFILE TFMOUTFILE" << endl;
     cerr << "INFILE:" << endl;
-    cerr << "  File to construct tunneled FM index from, nullbytes are permitted" << endl;
+    cerr << "  Parse file to construct tunneled FM index from, nullbytes are permitted" << endl;
     cerr << "TFMOUTFILE:" << endl;
-    cerr << "  File where to store the serialized tunneled fm index" << endl;
+    cerr << "  File where to store the serialized tunneled FM index of the parse" << endl;
 };
 
 //little hack to get extra information from memory managemant
@@ -175,41 +169,6 @@ uint32_t* load_parse(const string &infile, size_t &psize) {
     return parse;
 }
 
-uint64_t *read_dictionary_sizes(const char *filename, const size_t sigma) {
-        FILE *g = fopen(filename, "rb");
-        fseek(g, 0, SEEK_END);
-        long dsize = ftell(g);
-        if(dsize < 0) die("ftell dictionary");
-        if(dsize <= 1+4) die("invalid dictionary file");
-        cout  << "Dictionary file size: " << dsize << endl;
-        #if !M64
-        if(dsize > 0x7FFFFFFE) {
-            printf("Dictionary size greater than  2^31-2!\n");
-            printf("Please use 64 bit version\n");
-            exit(1);
-        }
-        #endif
-
-        uint8_t *d = new uint8_t[dsize];
-        rewind(g);
-        uint64_t e = fread(d, 1, dsize, g);
-        if (e != (uint64_t)dsize) die("Dictionary fread errror!");
-        fclose(g);
-
-        uint64_t *dsizes = new uint64_t[sigma+1];
-        dsizes[0] = 0;
-        uint64_t act_size = 0;
-        int cnt = 1;
-        for (int i = 0; i < dsize; i++) {
-            if (d[i] == EndOfWord) {
-                dsizes[cnt++] = act_size;
-            }
-            else act_size++;
-        }
-
-        delete[] d;
-        return dsizes;
-}
 
 size_t compute_sigma(const uint32_t* parse, const size_t psize) {
     uint32_t max = 0;
@@ -222,53 +181,18 @@ size_t compute_sigma(const uint32_t* parse, const size_t psize) {
 
 int main(int argc, char **argv) {
     //set default configuration
-    construct_config::byte_algo_sa = LIBDIVSUFSORT;
     bool informative = false; //informative mode
     string infile = "Makefile";
-    string dict  = "Makefile";
     string outfile = "Makefile.tfm";
 
     //check parameters
-    if (argc < 4) {
+    if (argc < 3) {
         printUsage(argv);
         cerr << "At least 2 parameters expected" << endl;
         return 1;
     }
-    enum {
-        SA, IN, NO
-    } last_option; //enumeration for last option
-    last_option = NO;
-    for (int i = 1; i < argc - 3; i++) { //analyze options
-        switch (last_option) {
-            case NO:
-            case IN: //last option does not require a parameter, read next option
-                if (strcmp(argv[i], "-i") == 0) { //enable informative mode
-                    last_option = IN;
-                    informative = true;
-                } else if (strcmp(argv[i], "-sa") == 0) {
-                    last_option = SA;
-                } else {
-                    printUsage(argv);
-                    cerr << "Unknown option " << argv[i] << endl;
-                    return 1;
-                }
-                break;
-            case SA: //choose suffix array construction algorithm
-                if (strcmp(argv[i], "DIVSUFSORT") == 0) {
-                    construct_config::byte_algo_sa = LIBDIVSUFSORT;
-                } else if (strcmp(argv[i], "SE_SAIS") == 0) {
-                    construct_config::byte_algo_sa = SE_SAIS;
-                } else {
-                    printUsage(argv);
-                    cerr << "Unknown suffix array construction algorithm " << argv[i] << endl;
-                    return 1;
-                }
-                last_option = NO;
-                break;
-        }
-    }
-    infile = argv[argc - 3];
-    dict = argv[argc - 2];
+    
+    infile = argv[argc - 2];
     outfile = argv[argc - 1];
 
     //construct tunneled fm index
@@ -283,10 +207,6 @@ int main(int argc, char **argv) {
         sigma = compute_sigma(parse, psize);
         compute_BWT(parse, psize+1, sigma, infile + ".bwt");
         delete parse;
-        //uint64_t* dsizes = read_dictionary_sizes(dict.c_str(), sigma);
-        //csa_wt<wt_blcd_int<>> csa;
-        //construct_im(csa, parse);
-        //fm_size = size_in_bytes(csa);
         construct_tfm_index(tfm, infile + ".bwt", psize+1, config);
         tfm_size = size_in_bytes(tfm);
     }
